@@ -23,18 +23,19 @@ MainWindow::MainWindow() :
 	// Creating an image panel.
 	image = new GUI::wxImagePanel(this);
 	wxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-	// Sweep.SetDrawPanel(image);
+	sweep.setDrawPanel(image);
 	sizer->Add(image, 1, wxEXPAND);
 	SetSizer(sizer);
 
 	// Events.
-	Bind(wxEVT_MENU, &MainWindow::onLoadF4, this, static_cast<int>(EventID::ID_LoadF4));
+	Bind(wxEVT_MENU, &MainWindow::loadF4, this, static_cast<int>(EventID::ID_LoadF4));          // Loading the chain code.
+	Bind(wxEVT_MENU, &MainWindow::multiSweep, this, static_cast<int>(EventID::ID_Multisweep));  // Starting multisweep algorithm.
 }
 
 
 
 // Loading the F4 chain code.
-void MainWindow::onLoadF4(wxCommandEvent& event) {
+void MainWindow::loadF4(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
 	wxFileDialog fd(this, _("Open TXT file"), "", "", "ZXZ files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	
@@ -45,7 +46,7 @@ void MainWindow::onLoadF4(wxCommandEvent& event) {
 
 	// Reading a file with the F4 chain code.
 	std::string file = fd.GetPath().ToStdString();
-	std::vector<std::byte> chainCode = readFile(file);
+	std::vector<std::byte> chainCode = sweep.readFile(file);
 
 	// Converting the F4 chain code to coordinates and drawing it on the image panel.
 	sweep.setF4(chainCode);
@@ -55,28 +56,14 @@ void MainWindow::onLoadF4(wxCommandEvent& event) {
 	image->Refresh();
 }
 
-
-
-// Reading a file.
-std::vector<std::byte> MainWindow::readFile(std::string file) {
-	std::vector<std::byte> chainCode;
-	
-	// Opening a file.
-	std::ifstream in(file);
-	
-	// If a file is not open, we do not panic but abort the process.
-	if (!in.is_open()) {
-		return chainCode;
+// Multi sweep algorithm event for object categorization.
+void MainWindow::multiSweep(wxCommandEvent& event) {
+	if (sweep.isChainCodeSet()) {
+		sweep.clearSegments();  // Clearing potential previously calculated segments.
+		sweep.fillShape();		// Filling the object.
+		image->Refresh();
 	}
-
-	// Reading a file character by character.
-	char c;
-	while (in.read(&c, 1)) {
-		// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
-		if (c == '0' || c == '1' || c == '2' || c == '3') {
-			chainCode.push_back(static_cast<std::byte>(c));
-		}
+	else {
+		wxMessageBox("Object has not been loaded.", "Warning", wxOK | wxICON_WARNING);
 	}
-
-	return chainCode;
 }

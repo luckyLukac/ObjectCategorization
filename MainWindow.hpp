@@ -11,17 +11,16 @@
 class MainWindow : public wxFrame {
 
 private:
-	unsigned int xWindowSize = 1000;                    // Window size by X coordinate.
-	unsigned int yWindowSize = 600;                     // Window size by Y coordinate.
-	GUI::wxImagePanel* image = nullptr;                 // Image panel.
-	LineSweeping sweep;									// Line sweeping object.
+	unsigned int xWindowSize = 1000;         // Window size by X coordinate.
+	unsigned int yWindowSize = 600;          // Window size by Y coordinate.
+	GUI::wxImagePanel* image = nullptr;      // Image panel.
+	LineSweeping sweep;						 // Line sweeping object.
 
 public:
-	MainWindow();                                       // Constructor of the window.
+	MainWindow();                            // Constructor of the window.
 
-	void onLoadF4(wxCommandEvent& event);               // Loading the F4 chain code.
-
-	std::vector<std::byte> readFile(std::string file);  // Reading a file.
+	void loadF4(wxCommandEvent& event);      // Loading the F4 chain code.
+	void multiSweep(wxCommandEvent& event);  // Multi sweep algorithm event for object categorization.
 };
 
 

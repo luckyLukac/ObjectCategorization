@@ -1,9 +1,12 @@
 #include <algorithm>
+#include <fstream>
 #include <limits>
+#include <stack>
 
 #include "LineSweeping.hpp"
 
 
+// PRIVATE HELPER METHODS
 // Calculation of a bounding box according to point coordinates.
 void LineSweeping::calculateBoundingBox() {
 	// Initializing coordinates to max and min.
@@ -11,32 +14,45 @@ void LineSweeping::calculateBoundingBox() {
 	int yMin = std::numeric_limits<int>::max();
 	int xMax = std::numeric_limits<int>::min();
 	int yMax = std::numeric_limits<int>::min();
+	unsigned int yMaxIndex = 0;
 
 	// Iterating through each point.
-	for (const Point& point : coordinates) {
+	for (unsigned int i = 0; i < coordinates.size(); i++) {
 		// If a point X coordinate is smaller than the global
 		// minimum, a new global minimum is set.
-		if (point.x < xMin) {
-			xMin = point.x;
+		if (coordinates[i].x < xMin) {
+			xMin = coordinates[i].x;
 		}
 
 		// If a point X coordinate is larger than the global
 		// maximum, a new global maximum is set.
-		if (point.x > xMax) {
-			xMax = point.x;
+		if (coordinates[i].x > xMax) {
+			xMax = coordinates[i].x;
 		}
 
 		// If a point Y coordinate is smaller than the global
 		// minimum, a new global minimum is set.
-		if (point.y < yMin) {
-			yMin = point.y;
+		if (coordinates[i].y < yMin) {
+			yMin = coordinates[i].y;
 		}
 
 		// If a point Y coordinate is larger than the global
 		// maximum, a new global maximum is set.
-		if (point.y > yMax) {
-			yMax = point.y;
+		if (coordinates[i].y > yMax) {
+			yMax = coordinates[i].y;
+			yMaxIndex = i;
 		}
+	}
+
+	const char topYChainCode = static_cast<char>(chainCode[yMaxIndex]);
+	const char nextTopYChainCode = static_cast<char>(chainCode[(yMaxIndex + 1) % chainCode.size()]);
+	if (
+		(topYChainCode == '0' && nextTopYChainCode == '3') ||
+		(topYChainCode == '0' && nextTopYChainCode == '0') ||
+		(topYChainCode == '1' && nextTopYChainCode == '0') 
+	)
+	{
+		clockwiseOrientation = true;
 	}
 
 	// Moving the bounding box to the left upper corner.
@@ -83,12 +99,15 @@ void LineSweeping::calculateBoundingBox() {
 	);
 
 	// Setting the max coordinates.
-	maxX = magnifiedPivotCoordinate + 1;
-	maxY = magnifiedPivotCoordinate + 1;
+	this->maxX = magnifiedPivotCoordinate + 1;
+	this->maxY = magnifiedPivotCoordinate + 1;
+
+	// Creating the pixel field.
+	pixelField = std::vector<std::vector<Position>>(this->maxX, std::vector<Position>(this->maxX, Position::outside));
 }
 
 // Filling a rectangle at X and Y coordinates.
-void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush) {
+void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush) const {
 	// Creating a wxPoint for rendering.
 	wxPoint P[4] = {
 		wxPoint(x, y),
@@ -109,14 +128,46 @@ void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int p
 
 
 
+// PLOT METHODS
+// Plotting the F4 chain code as an image.
+void LineSweeping::plotInput(wxDC& dc) const {
+	// Setting the color to green.
+	const wxPen pen(*wxGREEN_PEN);
+	const wxBrush brush(*wxGREEN_BRUSH);
 
+	for (const Point& point : coordinates) {
+		fillRectangle(dc, point.x, -point.y + maxX, 1, pen, brush);
+	}
+
+	// Plotting each point as a pixel.
+	for (const Point& point : testFillcoordinatesTEMP) {
+		fillRectangle(dc, point.x, -point.y + maxX, 1, pen, brush);
+	}
+}
+
+// Plotting the object bounding box.
+void LineSweeping::plotBoundingBox(wxDC& dc) const {
+	// Plotting the four lines of the bounding box.
+	dc.DrawLine(0, 0, maxX, 0);
+	dc.DrawLine(maxX, 0, maxX, maxY);
+	dc.DrawLine(maxX, maxY, 0, maxY);
+	dc.DrawLine(0, maxY, 0, 0);
+}
+
+
+
+// GETTERS AND SETTERS
 // Setting F4 chain code.
 void LineSweeping::setF4(const std::vector<std::byte>& chainCode) {
-	// Adding the first point to coordinates.
-	Point point;
-	coordinates.push_back(point);
+	this->chainCode.clear();  // Clearing the previous chain code.
+	coordinates.clear();      // Clearing the previous coordinates.
+	testFillcoordinatesTEMP.clear();
 
-	// Current X and Y coordinates.
+	// Adding the chain code to the object.
+	this->chainCode = chainCode;
+
+	// Current point and X and Y coordinates.
+	Point point;
 	int currentX = 0;
 	int currentY = 0;
 
@@ -152,27 +203,119 @@ void LineSweeping::setF4(const std::vector<std::byte>& chainCode) {
 	calculateBoundingBox();
 }
 
-// Plotting the F4 chain code as an image.
-void LineSweeping::plotInput(wxDC& dc) {
-	// Setting the color to green.
-	const wxPen pen(*wxGREEN_PEN);
-	const wxBrush brush(*wxGREEN_BRUSH);
+// Setting draw panel.
+void LineSweeping::setDrawPanel(wxWindow* drawWindow) {
+	this->drawWindow = drawWindow;
+}
 
-	// Plotting each point as a pixel.
-	for (const Point& point : coordinates) {
-		fillRectangle(dc, point.x, point.y, 1, pen, brush);
+// Returning true if a chain code is set.
+bool LineSweeping::isChainCodeSet() const {
+	return !coordinates.empty();
+}
+
+// Clearing previous segments.
+void LineSweeping::clearSegments() {
+	segments.clear();
+}
+
+
+
+// PUBLIC METHODS
+// Reading a file.
+std::vector<std::byte> LineSweeping::readFile(std::string file) const {
+	std::vector<std::byte> chainCode;
+
+	// Opening a file.
+	std::ifstream in(file);
+
+	// If a file is not open, we do not panic but abort the process.
+	if (!in.is_open()) {
+		return chainCode;
 	}
+
+	// Reading a file character by character.
+	char c;
+	while (in.read(&c, 1)) {
+		// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
+		if (c == '0' || c == '1' || c == '2' || c == '3') {
+			chainCode.push_back(static_cast<std::byte>(c));
+		}
+	}
+
+	return chainCode;
 }
 
-// Plotting the object bounding box.
-void LineSweeping::plotBoundingBox(wxDC& dc) {
-	// Plotting the four lines of the bounding box.
-	dc.DrawLine(0, 0, maxX, 0);
-	dc.DrawLine(maxX, 0, maxX, maxY);
-	dc.DrawLine(maxX, maxY, 0, maxY);
-	dc.DrawLine(0, maxY, 0, 0);
-}
+// Filling the loaded shape.
+void LineSweeping::fillShape() {
+	// TEMP
+	testFillcoordinatesTEMP = std::vector<Point>();
 
+	// Creating two stacks for filling the shape.
+	std::stack<unsigned int> leftStack;
+	std::stack<unsigned int> rightStack;
+
+	// Iterating through the chain code and filling the shape.
+	for (unsigned int i = 0; i < chainCode.size(); i++) {
+		const char code = static_cast<char>(chainCode[i]);
+		const unsigned int x = coordinates[i].x;
+		const unsigned int y = coordinates[i].y;
+
+		pixelField[y][x] = Position::edge;
+
+		if (code == '2') {
+			int auisfhuia = 9;
+		}
+
+		if ((code == '1' && clockwiseOrientation) || (code == '3' && !clockwiseOrientation)) {
+			if (!rightStack.empty()) {
+				const unsigned int right = rightStack.top();
+				rightStack.pop();
+
+				for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
+					pixelField[y][pixelX] = Position::inside;
+				}
+
+				if (right <= x) {
+					for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
+						pixelField[y][pixelX] = Position::outside;
+					}
+				}
+			}
+			else {
+				leftStack.push(x);
+			}
+		}
+		else if ((code == '3' && clockwiseOrientation) || (code == '1' && !clockwiseOrientation)) {
+			if (!leftStack.empty()) {
+				const unsigned int left = leftStack.top();
+				leftStack.pop();
+
+				for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
+					pixelField[y][pixelX] = Position::inside;
+				}
+
+				if (left > x) {
+					for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
+						pixelField[y][pixelX] = Position::outside;
+					}
+				}
+			}
+			else {
+				rightStack.push(x);
+			}
+		}
+	}
+
+	for (int i = 0; i < pixelField.size(); i++) {
+		for (int j = 0; j < pixelField[i].size(); j++) {
+			if (pixelField[i][j] == Position::inside) {
+				testFillcoordinatesTEMP.push_back(Point(j, i));
+			}
+		}
+	}
+
+	int xxx = 0;
+}
 
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/

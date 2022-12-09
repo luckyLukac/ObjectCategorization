@@ -12,7 +12,7 @@ namespace GUI {
 		int height;				                // Height of the panel.
 		bool F4PlotFlag = false;                // Flag for plotting the F4 chain code.
 		bool segmentFlag = false;               // Flag for drawing of a segment.
-		LineSweeping* sweep;				    // Line sweeping object.
+		LineSweeping* sweep = nullptr;			// Line sweeping object.
 
 		void render(wxDC& dc);                  // Render function.
 

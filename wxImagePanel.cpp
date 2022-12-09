@@ -7,7 +7,6 @@ namespace GUI {
 	END_EVENT_TABLE()
 
 	// Render function.
-	// TODO
 	void wxImagePanel::render(wxDC& dc) {
 		// Resetting the panel and appending the correct parameters to it.
 		dc.Clear();
@@ -32,7 +31,8 @@ namespace GUI {
 	wxImagePanel::wxImagePanel(wxFrame* parent) :
 		wxPanel(parent),
 		width(0),
-		height(0)
+		height(0),
+		sweep(nullptr)
 	{
 		SetBackgroundColour(*wxWHITE);  // Setting background color to white.
 	}
