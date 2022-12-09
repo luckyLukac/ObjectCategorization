@@ -87,6 +87,27 @@ void LineSweeping::calculateBoundingBox() {
 	maxY = magnifiedPivotCoordinate + 1;
 }
 
+// Filling a rectangle at X and Y coordinates.
+void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush) {
+	// Creating a wxPoint for rendering.
+	wxPoint P[4] = {
+		wxPoint(x, y),
+		wxPoint(x + pixelSize, y),
+		wxPoint(x + pixelSize, y + pixelSize),
+		wxPoint(x, y + pixelSize)
+	};
+
+	// Drawing the point.
+	dc.SetPen(pen);
+	dc.SetBrush(brush);
+	dc.DrawPolygon(4, P);
+
+	// Resetting the pen and the brush.
+	dc.SetPen(*wxBLACK_PEN);
+	dc.SetBrush(*wxWHITE_BRUSH);
+}
+
+
 
 
 // Setting F4 chain code.
@@ -129,6 +150,27 @@ void LineSweeping::setF4(const std::vector<std::byte>& chainCode) {
 
 	// Calculation of the bounding box.
 	calculateBoundingBox();
+}
+
+// Plotting the F4 chain code as an image.
+void LineSweeping::plotInput(wxDC& dc) {
+	// Setting the color to green.
+	const wxPen pen(*wxGREEN_PEN);
+	const wxBrush brush(*wxGREEN_BRUSH);
+
+	// Plotting each point as a pixel.
+	for (const Point& point : coordinates) {
+		fillRectangle(dc, point.x, point.y, 1, pen, brush);
+	}
+}
+
+// Plotting the object bounding box.
+void LineSweeping::plotBoundingBox(wxDC& dc) {
+	// Plotting the four lines of the bounding box.
+	dc.DrawLine(0, 0, maxX, 0);
+	dc.DrawLine(maxX, 0, maxX, maxY);
+	dc.DrawLine(maxX, maxY, 0, maxY);
+	dc.DrawLine(0, maxY, 0, 0);
 }
 
 

@@ -16,7 +16,8 @@ namespace GUI {
 
 		// If a F4 plot flag is set, a shape is plotted to the panel.
 		if (F4PlotFlag) {
-			// TODO
+			sweep->plotInput(dc);        // Plotting the chain code shape.
+			sweep->plotBoundingBox(dc);  // Plotting the bounding box of the object.
 		}
 
 		// If a segment flag is set, 
