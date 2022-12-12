@@ -7,6 +7,44 @@
 
 
 // PRIVATE HELPER METHODS
+// Transforming chain code to coordinates.
+void LineSweeping::calculateCoordinatesFromChainCode() {
+	coordinates.clear();  // Clearing the previous coordinates.
+
+	// Current point and X and Y coordinates.
+	Point point;
+	int currentX = 0;
+	int currentY = 0;
+
+	// Adding new coordinates according to the chain code.
+	for (const std::byte& chainElement : chainCode) {
+		const int direction = to_integer<int>(chainElement) - 48;  // Casting the byte to char.
+
+		// 0 means right.
+		if (direction == 0) {
+			currentX++;
+		}
+		// 1 means up.
+		else if (direction == 1) {
+			currentY++;
+		}
+		// 2 means left.
+		else if (direction == 2) {
+			currentX--;
+		}
+		// 3 means down.
+		else if (direction == 3) {
+			currentY--;
+		}
+
+		// Adding a new coordinate to the vector.
+		point.x = currentX;
+		point.y = currentY;
+		point.segmentID = -1;
+		coordinates.push_back(point);
+	}
+}
+
 // Calculation of a bounding box according to point coordinates.
 void LineSweeping::calculateBoundingBox() {
 	// Initializing coordinates to max and min.
@@ -44,15 +82,30 @@ void LineSweeping::calculateBoundingBox() {
 		}
 	}
 
+	// Checking whether the chain code is anti-clockwise.
 	const char topYChainCode = static_cast<char>(chainCode[yMaxIndex]);
 	const char nextTopYChainCode = static_cast<char>(chainCode[(yMaxIndex + 1) % chainCode.size()]);
-	if (
-		(topYChainCode == '0' && nextTopYChainCode == '3') ||
-		(topYChainCode == '0' && nextTopYChainCode == '0') ||
-		(topYChainCode == '1' && nextTopYChainCode == '0') 
-	)
-	{
-		clockwiseOrientation = true;
+	const bool isAntiClockwise = !(topYChainCode == '0' && nextTopYChainCode == '3') && !(topYChainCode == '0' && nextTopYChainCode == '0') && !(topYChainCode == '1' && nextTopYChainCode == '0');
+	
+	// As we programmers do not tend to overcomplicate our lives, the chain
+	// code is reversed if it is written in anti-clockwise orientation.
+	if (isAntiClockwise) {
+		// In order to reverse a chain code, the vector must be reversed along with the chain code instructions.
+		std::reverse(chainCode.begin(), chainCode.end());
+		std::transform(
+			chainCode.begin(),
+			chainCode.end(),
+			chainCode.begin(),
+			[](const std::byte& element) {
+				const int ch = static_cast<int>(element) - 48;
+				return static_cast<std::byte>(((ch + 2) % 4) + 48);
+			}
+		);
+
+		// Calculation of new coordinates and the bounding box.
+		calculateCoordinatesFromChainCode();
+		calculateBoundingBox();
+		return;
 	}
 
 	// Moving the bounding box to the left upper corner.
@@ -166,40 +219,8 @@ void LineSweeping::setF4(const std::vector<std::byte>& chainCode) {
 	// Adding the chain code to the object.
 	this->chainCode = chainCode;
 
-	// Current point and X and Y coordinates.
-	Point point;
-	int currentX = 0;
-	int currentY = 0;
-
-	// Adding new coordinates according to the chain code.
-	for (const std::byte& chainElement : chainCode) {
-		const int direction = to_integer<int>(chainElement) - 48;  // Casting the byte to char.
-
-		// 0 means right.
-		if (direction == 0) {
-			currentX++;
-		}
-		// 1 means up.
-		else if (direction == 1) {
-			currentY++;
-		}
-		// 2 means left.
-		else if (direction == 2) {
-			currentX--;
-		}
-		// 3 means down.
-		else if (direction == 3) {
-			currentY--;
-		}
-
-		// Adding a new coordinate to the vector.
-		point.x = currentX;
-		point.y = currentY;
-		point.segmentID = -1;
-		coordinates.push_back(point);
-	}
-
-	// Calculation of the bounding box.
+	// Calculation of coordinates and the bounding box.
+	calculateCoordinatesFromChainCode();
 	calculateBoundingBox();
 }
 
@@ -262,11 +283,7 @@ void LineSweeping::fillShape() {
 
 		pixelField[y][x] = Position::edge;
 
-		if (code == '2') {
-			int auisfhuia = 9;
-		}
-
-		if ((code == '1' && clockwiseOrientation) || (code == '3' && !clockwiseOrientation)) {
+		if (code == '1') {
 			if (!rightStack.empty()) {
 				const unsigned int right = rightStack.top();
 				rightStack.pop();
@@ -275,7 +292,7 @@ void LineSweeping::fillShape() {
 					pixelField[y][pixelX] = Position::inside;
 				}
 
-				if (right <= x) {
+				if (right < x) {
 					for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
 						pixelField[y][pixelX] = Position::outside;
 					}
@@ -285,7 +302,7 @@ void LineSweeping::fillShape() {
 				leftStack.push(x);
 			}
 		}
-		else if ((code == '3' && clockwiseOrientation) || (code == '1' && !clockwiseOrientation)) {
+		else if (code == '3') {
 			if (!leftStack.empty()) {
 				const unsigned int left = leftStack.top();
 				leftStack.pop();

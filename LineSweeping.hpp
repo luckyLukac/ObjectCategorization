@@ -49,7 +49,6 @@ private:
 	// PRIVATE VARIABLES
 	wxWindow* drawWindow = nullptr;		 // Draw window.
 	std::vector<std::byte> chainCode;    // F4 chain code.
-	bool clockwiseOrientation = false;
 	std::vector<Point> coordinates;      // Point coordinates.
 	std::vector<Point> testFillcoordinatesTEMP;
 	int maxX = 0;						 // Maximum X coordinate.
@@ -58,6 +57,7 @@ private:
 	std::vector<Segment> segments;		 // Vector of segments.
 
 	// PRIVATE HELPER METHODS
+	void calculateCoordinatesFromChainCode();																					// Transforming chain code to coordinates.
 	void calculateBoundingBox();																							    // Calculation of a bounding box according to point coordinates.
 	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush) const;  // Filling a rectangle at X and Y coordinates.
 
