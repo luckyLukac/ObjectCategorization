@@ -34,7 +34,8 @@ struct Segment {
 enum class Position {
 	edge,
 	outside,
-	inside
+	inside,
+	undefined
 };
 
 

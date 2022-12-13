@@ -14,11 +14,11 @@ void LineSweeping::calculateCoordinatesFromChainCode() {
 	// Current point and X and Y coordinates.
 	Point point;
 	int currentX = 0;
-	int currentY = 0;
+	int currentY = -0;
 
 	// Adding new coordinates according to the chain code.
 	for (const std::byte& chainElement : chainCode) {
-		const int direction = to_integer<int>(chainElement) - 48;  // Casting the byte to char.
+		const int direction = static_cast<int>(chainElement) - 48;  // Casting the byte to char.
 
 		// 0 means right.
 		if (direction == 0) {
@@ -156,7 +156,7 @@ void LineSweeping::calculateBoundingBox() {
 	this->maxY = magnifiedPivotCoordinate + 1;
 
 	// Creating the pixel field.
-	pixelField = std::vector<std::vector<Position>>(this->maxX, std::vector<Position>(this->maxX, Position::outside));
+	pixelField = std::vector<std::vector<Position>>(this->maxX, std::vector<Position>(this->maxX, Position::undefined));
 }
 
 // Filling a rectangle at X and Y coordinates.
@@ -288,11 +288,14 @@ void LineSweeping::fillShape() {
 				const unsigned int right = rightStack.top();
 				rightStack.pop();
 
-				for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
-					pixelField[y][pixelX] = Position::inside;
+				if (right > x) {
+					for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
+						if (pixelField[y][pixelX] == Position::undefined) {
+							pixelField[y][pixelX] = Position::inside;
+						}
+					}
 				}
-
-				if (right < x) {
+				else {
 					for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
 						pixelField[y][pixelX] = Position::outside;
 					}
@@ -307,11 +310,14 @@ void LineSweeping::fillShape() {
 				const unsigned int left = leftStack.top();
 				leftStack.pop();
 
-				for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
-					pixelField[y][pixelX] = Position::inside;
+				if (left < x) {
+					for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
+						if (pixelField[y][pixelX] == Position::undefined) {
+							pixelField[y][pixelX] = Position::inside;
+						}
+					}
 				}
-
-				if (left > x) {
+				else {
 					for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
 						pixelField[y][pixelX] = Position::outside;
 					}

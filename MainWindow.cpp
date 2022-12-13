@@ -1,4 +1,5 @@
 #include <fstream>
+#include <chrono>
 
 #include "MainWindow.hpp"
 
@@ -56,11 +57,20 @@ void MainWindow::loadF4(wxCommandEvent& event) {
 	image->Refresh();
 }
 
+#include <string>
+
 // Multi sweep algorithm event for object categorization.
 void MainWindow::multiSweep(wxCommandEvent& event) {
 	if (sweep.isChainCodeSet()) {
 		sweep.clearSegments();  // Clearing potential previously calculated segments.
+
+		auto start = std::chrono::high_resolution_clock::now();
 		sweep.fillShape();		// Filling the object.
+		auto end = std::chrono::high_resolution_clock::now();
+
+		auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+		wxMessageBox(std::to_string(time) + " ms", "", wxOK | wxICON_WARNING);
+
 		image->Refresh();
 	}
 	else {
