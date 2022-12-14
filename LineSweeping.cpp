@@ -3,6 +3,7 @@
 #include <limits>
 #include <stack>
 
+#include "HelperFunctions.hpp"
 #include "LineSweeping.hpp"
 
 
@@ -152,11 +153,10 @@ void LineSweeping::calculateBoundingBox() {
 	);
 
 	// Setting the max coordinates.
-	this->maxX = magnifiedPivotCoordinate + 1;
-	this->maxY = magnifiedPivotCoordinate + 1;
+	this->maxCoordinate = magnifiedPivotCoordinate + 1;
 
 	// Creating the pixel field.
-	pixelField = std::vector<std::vector<Position>>(this->maxX, std::vector<Position>(this->maxX, Position::undefined));
+	pixelField = std::vector<std::vector<Position>>(this->maxCoordinate, std::vector<Position>(this->maxCoordinate, Position::undefined));
 }
 
 // Filling a rectangle at X and Y coordinates.
@@ -179,6 +179,10 @@ void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int p
 	dc.SetBrush(*wxWHITE_BRUSH);
 }
 
+// Adding the current midpoint.
+void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Point>& rasterizedLine) {
+
+}
 
 
 // PLOT METHODS
@@ -188,23 +192,27 @@ void LineSweeping::plotInput(wxDC& dc) const {
 	const wxPen pen(*wxGREEN_PEN);
 	const wxBrush brush(*wxGREEN_BRUSH);
 
-	for (const Point& point : coordinates) {
-		fillRectangle(dc, point.x, -point.y + maxX, 1, pen, brush);
-	}
-
 	// Plotting each point as a pixel.
-	for (const Point& point : testFillcoordinatesTEMP) {
-		fillRectangle(dc, point.x, -point.y + maxX, 1, pen, brush);
+	for (const Point& point : coordinates) {
+		fillRectangle(dc, point.x, -point.y + maxCoordinate, 1, pen, brush);
 	}
 }
 
 // Plotting the object bounding box.
 void LineSweeping::plotBoundingBox(wxDC& dc) const {
 	// Plotting the four lines of the bounding box.
-	dc.DrawLine(0, 0, maxX, 0);
-	dc.DrawLine(maxX, 0, maxX, maxY);
-	dc.DrawLine(maxX, maxY, 0, maxY);
-	dc.DrawLine(0, maxY, 0, 0);
+	dc.DrawLine(0, 0, maxCoordinate, 0);
+	dc.DrawLine(maxCoordinate, 0, maxCoordinate, maxCoordinate);
+	dc.DrawLine(maxCoordinate, maxCoordinate, 0, maxCoordinate);
+	dc.DrawLine(0, maxCoordinate, 0, 0);
+}
+
+// Plotting the Bresenham line.
+void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Point>& rasterizedLine) const {
+	// Plotting each pixel of the line.
+	for (const Point& pixel : rasterizedLine) {
+		fillRectangle(dc, pixel.x, -pixel.y + maxCoordinate, 1, *wxLIGHT_GREY_PEN, *wxLIGHT_GREY_BRUSH);
+	}
 }
 
 
@@ -214,7 +222,6 @@ void LineSweeping::plotBoundingBox(wxDC& dc) const {
 void LineSweeping::setF4(const std::vector<std::byte>& chainCode) {
 	this->chainCode.clear();  // Clearing the previous chain code.
 	coordinates.clear();      // Clearing the previous coordinates.
-	testFillcoordinatesTEMP.clear();
 
 	// Adding the chain code to the object.
 	this->chainCode = chainCode;
@@ -237,6 +244,11 @@ bool LineSweeping::isChainCodeSet() const {
 // Clearing previous segments.
 void LineSweeping::clearSegments() {
 	segments.clear();
+}
+
+// Setting the angle of rotation (given in radians).
+void LineSweeping::setAngleOfRotation(const double angle) {
+	angleOfRotation = angle;
 }
 
 
@@ -268,26 +280,28 @@ std::vector<std::byte> LineSweeping::readFile(std::string file) const {
 
 // Filling the loaded shape.
 void LineSweeping::fillShape() {
-	// TEMP
-	testFillcoordinatesTEMP = std::vector<Point>();
-
 	// Creating two stacks for filling the shape.
 	std::stack<unsigned int> leftStack;
 	std::stack<unsigned int> rightStack;
 
 	// Iterating through the chain code and filling the shape.
 	for (unsigned int i = 0; i < chainCode.size(); i++) {
+		// Getting the chain code elemenz and the X and Y coordinates of the pixel.
 		const char code = static_cast<char>(chainCode[i]);
 		const unsigned int x = coordinates[i].x;
 		const unsigned int y = coordinates[i].y;
 
+		// Setting the current pixel to edge.
 		pixelField[y][x] = Position::edge;
 
+		// If the instruction is to go up, the left stack is pushed to if the right stack is empty.
 		if (code == '1') {
 			if (!rightStack.empty()) {
+				// Getting the top element from the right stack.
 				const unsigned int right = rightStack.top();
 				rightStack.pop();
 
+				// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
 				if (right > x) {
 					for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
 						if (pixelField[y][pixelX] == Position::undefined) {
@@ -295,6 +309,7 @@ void LineSweeping::fillShape() {
 						}
 					}
 				}
+				// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
 				else {
 					for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
 						pixelField[y][pixelX] = Position::outside;
@@ -305,11 +320,14 @@ void LineSweeping::fillShape() {
 				leftStack.push(x);
 			}
 		}
+		// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
 		else if (code == '3') {
 			if (!leftStack.empty()) {
+				// Getting the top element from the left stack.
 				const unsigned int left = leftStack.top();
 				leftStack.pop();
 
+				// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
 				if (left < x) {
 					for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
 						if (pixelField[y][pixelX] == Position::undefined) {
@@ -317,6 +335,7 @@ void LineSweeping::fillShape() {
 						}
 					}
 				}
+				// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
 				else {
 					for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
 						pixelField[y][pixelX] = Position::outside;
@@ -328,17 +347,66 @@ void LineSweeping::fillShape() {
 			}
 		}
 	}
+}
 
-	for (int i = 0; i < pixelField.size(); i++) {
-		for (int j = 0; j < pixelField[i].size(); j++) {
-			if (pixelField[i][j] == Position::inside) {
-				testFillcoordinatesTEMP.push_back(Point(j, i));
-			}
+// Sweeping the object.
+void LineSweeping::sweep() {
+	// Creating the object for drawing the Bresenham line.
+	wxClientDC dc(drawWindow);
+
+	// Creating a Bresenham point vector.
+	std::vector<Point> bresenhamPixels(maxCoordinate);
+
+	// If the line is horizontal, there is no need for sophisticated rasterization method.
+	if (isInTolerance(angleOfRotation, 0.0)) {
+		// Creating the starting line segment points.
+		for (unsigned int i = 0; i < maxCoordinate; i++) {
+			bresenhamPixels[i] = Point(i, 0);
+		}
+
+		// Moving the rasterized line segment vertically.
+		for (unsigned int i = 0; i < maxCoordinate; i++) {
+			plotBresenhamLine(dc, bresenhamPixels);
+
+			// Increasing each pixel Y coordinate.
+			std::transform(
+				bresenhamPixels.begin(),
+				bresenhamPixels.end(),
+				bresenhamPixels.begin(),
+				[](const Point& pixel) {
+					return Point(pixel.x, pixel.y + 1);
+				}
+			);
 		}
 	}
+	// If the line is vertical, there is no need for sophisticated rasterization method.
+	else if (isInTolerance(angleOfRotation, toRadians(90))) {
+		// Creating the starting line segment points.
+		for (unsigned int i = 0; i < maxCoordinate; i++) {
+			bresenhamPixels[i] = Point(0, i);
+		}
 
-	int xxx = 0;
+		// Moving the rasterized line segment vertically.
+		for (unsigned int i = 0; i < maxCoordinate; i++) {
+			plotBresenhamLine(dc, bresenhamPixels);
+
+			// Increasing each pixel X coordinate.
+			std::transform(
+				bresenhamPixels.begin(),
+				bresenhamPixels.end(),
+				bresenhamPixels.begin(),
+				[](const Point& pixel) {
+					return Point(pixel.x + 1, pixel.y);
+				}
+			);
+		}
+	}
+	// If the line is neither horizontal nor vertical, we have to reach for Bresenham rasterization algorithm.
+	else {
+
+	}
 }
+
 
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/

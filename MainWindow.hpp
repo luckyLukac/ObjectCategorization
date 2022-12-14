@@ -12,7 +12,7 @@ class MainWindow : public wxFrame {
 
 private:
 	unsigned int xWindowSize = 1000;         // Window size by X coordinate.
-	unsigned int yWindowSize = 600;          // Window size by Y coordinate.
+	unsigned int yWindowSize = 1000;         // Window size by Y coordinate.
 	GUI::wxImagePanel* image = nullptr;      // Image panel.
 	LineSweeping sweep;						 // Line sweeping object.
 

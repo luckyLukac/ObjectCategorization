@@ -1,6 +1,6 @@
 #include <fstream>
-#include <chrono>
 
+#include "HelperFunctions.hpp"
 #include "MainWindow.hpp"
 
 
@@ -57,23 +57,18 @@ void MainWindow::loadF4(wxCommandEvent& event) {
 	image->Refresh();
 }
 
-#include <string>
-
 // Multi sweep algorithm event for object categorization.
 void MainWindow::multiSweep(wxCommandEvent& event) {
-	if (sweep.isChainCodeSet()) {
-		sweep.clearSegments();  // Clearing potential previously calculated segments.
-
-		auto start = std::chrono::high_resolution_clock::now();
-		sweep.fillShape();		// Filling the object.
-		auto end = std::chrono::high_resolution_clock::now();
-
-		auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-		wxMessageBox(std::to_string(time) + " ms", "", wxOK | wxICON_WARNING);
-
-		image->Refresh();
-	}
-	else {
+	// If a chain code is not set, we cannot sweep the object.
+	// This is the end, my beautiful friend.
+	if (!sweep.isChainCodeSet()) {
 		wxMessageBox("Object has not been loaded.", "Warning", wxOK | wxICON_WARNING);
+		return;
 	}
+	
+	// Sweeping the object.
+	sweep.clearSegments();				      // Clearing potential previously calculated segments.
+	sweep.fillShape();						  // Filling the object.
+	sweep.setAngleOfRotation(toRadians(90));   // Setting the angle of rotation for the sweep line.
+	sweep.sweep();						      // Sweeping the object with the sweep line.
 }

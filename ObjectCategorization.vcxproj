@@ -158,7 +158,7 @@
       <AdditionalIncludeDirectories>C:\wxWidgets-3.2.1\include\msvc;C:\wxWidgets-3.2.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -209,6 +209,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="HelperFunctions.hpp" />
     <ClInclude Include="LineSweeping.hpp" />
     <ClInclude Include="MainWindow.hpp" />
     <ClInclude Include="stdafx.h" />
@@ -216,6 +217,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="HelperFunctions.cpp" />
     <ClCompile Include="LineSweeping.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="wxImagePanel.cpp" />
