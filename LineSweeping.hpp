@@ -10,13 +10,13 @@ const double MAGNIFY_FACTOR = 1.5;
 
 // STRUCTURES
 // Point struct.
-struct Point {
+struct Pixel {
 	int x;
 	int y;
 	int segmentID;
 
-	Point();
-	Point(const int x, const int y, const int segmentID = -1);
+	Pixel();
+	Pixel(const int x, const int y, const int segmentID = -1);
 };
 
 
@@ -24,9 +24,9 @@ struct Point {
 struct Segment {
 	double angle;						// Sweep-line angle.
 	double averageAngle;				// Average angle of the obtained polyline.
-	std::vector<Point> middlePolyline;  // The obtained polyline.
-	std::vector<Point> offset1;		    //
-	std::vector<Point> offset2;			//
+	std::vector<Pixel> middlePolyline;  // The obtained polyline.
+	std::vector<Pixel> offset1;		    //
+	std::vector<Pixel> offset2;			//
 	bool isValid;						// Validity flag.
 };
 
@@ -51,25 +51,26 @@ private:
 	// PRIVATE VARIABLES
 	wxWindow* drawWindow = nullptr;		 // Draw window.
 	std::vector<std::byte> chainCode;    // F4 chain code.
-	std::vector<Point> coordinates;      // Point coordinates.
+	std::vector<Pixel> coordinates;      // Point coordinates.
 	PixelField pixelField;				 // Pixel field with pixel positions according to the object (edge, outside or inside).
 	int maxCoordinate = 0;				 // Maximum coordinate.
 
-	double angleOfRotation;				 // Sweep line angle of rotation [0°-180°].
-	std::vector<Point> midPoints;		 // Middle points found while sweeping.
+	double angleOfRotation = 0.0;		 // Sweep line angle of rotation [0°-180°].
+	std::vector<Pixel> midPoints;		 // Middle points found while sweeping.
 	std::vector<Segment> segments;		 // Vector of segments.
 
 	// PRIVATE HELPER METHODS
 	void calculateCoordinatesFromChainCode();																					// Transforming chain code to coordinates.
 	void calculateBoundingBox();																							    // Calculation of a bounding box according to point coordinates.
 	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush) const;  // Filling a rectangle at X and Y coordinates.
-	void addCurrentMidpointFromSweepLine(const std::vector<Point>& rasterizedLine);												// Adding the current midpoint and plotting the Bresenham line.
+	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;						// Finding edge pixel pairs.
+	void addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine);												// Adding the current midpoint and plotting the Bresenham line.
 
 public:
 	// PLOT METHODS
 	void plotInput(wxDC& dc) const;													   // Plotting the F4 chain code as an image.
 	void plotBoundingBox(wxDC& dc) const;											   // Plotting the object bounding box.
-	void plotBresenhamLine(wxDC& dc, const std::vector<Point>& rasterizedLine) const;  // Plotting the Bresenham line.
+	void plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasterizedLine) const;  // Plotting the Bresenham line.
 
 	// GETTERS AND SETTERS
 	void setF4(const std::vector<std::byte>& chainCode);      // Setting F4 chain code.

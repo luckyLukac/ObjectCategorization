@@ -13,7 +13,7 @@ void LineSweeping::calculateCoordinatesFromChainCode() {
 	coordinates.clear();  // Clearing the previous coordinates.
 
 	// Current point and X and Y coordinates.
-	Point point;
+	Pixel point;
 	int currentX = 0;
 	int currentY = -0;
 
@@ -114,8 +114,8 @@ void LineSweeping::calculateBoundingBox() {
 		coordinates.begin(),
 		coordinates.end(),
 		coordinates.begin(),
-		[&xMin, &yMin](Point point) {
-			return Point(point.x - xMin, point.y - yMin);
+		[&xMin, &yMin](Pixel point) {
+			return Pixel(point.x - xMin, point.y - yMin);
 		}
 	);
 
@@ -147,8 +147,8 @@ void LineSweeping::calculateBoundingBox() {
 		coordinates.begin(),
 		coordinates.end(),
 		coordinates.begin(),
-		[&magnifiedX, &magnifiedY](Point point) {
-			return Point(point.x + magnifiedX, point.y + magnifiedY);
+		[&magnifiedX, &magnifiedY](Pixel point) {
+			return Pixel(point.x + magnifiedX, point.y + magnifiedY);
 		}
 	);
 
@@ -179,9 +179,46 @@ void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int p
 	dc.SetBrush(*wxWHITE_BRUSH);
 }
 
-// Adding the current midpoint.
-void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Point>& rasterizedLine) {
+// Finding edge pixel pairs.
+std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& rasterizedLine) const {
+	std::vector<Pixel> pixels;
 
+	for (unsigned int i = 0; i < rasterizedLine.size(); i++) {
+		Pixel pixel = rasterizedLine[i];
+
+		// If the pixel is outside of the bounding box, it is not added to the vector.
+		if (pixel.x < 0 || pixel.x >= maxCoordinate || pixel.y < 0 || pixel.y >= maxCoordinate) {
+			continue;
+		}
+
+		if (pixelField[pixel.y][pixel.x] == Position::edge) {
+			pixels.emplace_back(pixel);
+		}
+	}
+
+	return pixels;
+}
+
+// Adding the current midpoint.
+void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine) {
+	// Plotting the rasterized line.
+	wxClientDC dc(drawWindow);
+	plotBresenhamLine(dc, rasterizedLine);
+
+	// Finding the edge pixels that lie on the current rasterized line.
+	std::vector<Pixel> edgePixel = findEdgePixels(rasterizedLine);
+
+	// Finding the middle points between the edge pixels.
+	for (unsigned int i = 1; i < edgePixel.size(); i++) {
+		// Calculating middle X and Y coordinates.
+		const int x = static_cast<int>((edgePixel[i - 1].x + edgePixel[i].x) / 2);
+		const int y = static_cast<int>((edgePixel[i - 1].y + edgePixel[i].y) / 2);
+		
+		// If the center point lies inside of the object, a red rectangle is drawn there.
+		if (pixelField[y][x] == Position::inside) {
+			fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH);
+		}
+	}
 }
 
 
@@ -193,7 +230,7 @@ void LineSweeping::plotInput(wxDC& dc) const {
 	const wxBrush brush(*wxGREEN_BRUSH);
 
 	// Plotting each point as a pixel.
-	for (const Point& point : coordinates) {
+	for (const Pixel& point : coordinates) {
 		fillRectangle(dc, point.x, -point.y + maxCoordinate, 1, pen, brush);
 	}
 }
@@ -208,9 +245,9 @@ void LineSweeping::plotBoundingBox(wxDC& dc) const {
 }
 
 // Plotting the Bresenham line.
-void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Point>& rasterizedLine) const {
+void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasterizedLine) const {
 	// Plotting each pixel of the line.
-	for (const Point& pixel : rasterizedLine) {
+	for (const Pixel& pixel : rasterizedLine) {
 		fillRectangle(dc, pixel.x, -pixel.y + maxCoordinate, 1, *wxLIGHT_GREY_PEN, *wxLIGHT_GREY_BRUSH);
 	}
 }
@@ -355,26 +392,27 @@ void LineSweeping::sweep() {
 	wxClientDC dc(drawWindow);
 
 	// Creating a Bresenham point vector.
-	std::vector<Point> bresenhamPixels(maxCoordinate);
+	std::vector<Pixel> bresenhamPixels(maxCoordinate);
 
 	// If the line is horizontal, there is no need for sophisticated rasterization method.
 	if (isInTolerance(angleOfRotation, 0.0)) {
 		// Creating the starting line segment points.
-		for (unsigned int i = 0; i < maxCoordinate; i++) {
-			bresenhamPixels[i] = Point(i, 0);
+		for (int i = 0; i < maxCoordinate; i++) {
+			bresenhamPixels[i] = Pixel(i, 0);
 		}
 
 		// Moving the rasterized line segment vertically.
-		for (unsigned int i = 0; i < maxCoordinate; i++) {
+		for (int i = 0; i < maxCoordinate; i++) {
 			plotBresenhamLine(dc, bresenhamPixels);
+			addCurrentMidpointFromSweepLine(bresenhamPixels);  // Adding midpoints according to the sweep line.
 
 			// Increasing each pixel Y coordinate.
 			std::transform(
 				bresenhamPixels.begin(),
 				bresenhamPixels.end(),
 				bresenhamPixels.begin(),
-				[](const Point& pixel) {
-					return Point(pixel.x, pixel.y + 1);
+				[](const Pixel& pixel) {
+					return Pixel(pixel.x, pixel.y + 1);
 				}
 			);
 		}
@@ -382,28 +420,40 @@ void LineSweeping::sweep() {
 	// If the line is vertical, there is no need for sophisticated rasterization method.
 	else if (isInTolerance(angleOfRotation, toRadians(90))) {
 		// Creating the starting line segment points.
-		for (unsigned int i = 0; i < maxCoordinate; i++) {
-			bresenhamPixels[i] = Point(0, i);
+		for (int i = 0; i < maxCoordinate; i++) {
+			bresenhamPixels[i] = Pixel(0, i);
 		}
 
 		// Moving the rasterized line segment vertically.
-		for (unsigned int i = 0; i < maxCoordinate; i++) {
+		for (int i = 0; i < maxCoordinate; i++) {
 			plotBresenhamLine(dc, bresenhamPixels);
+			addCurrentMidpointFromSweepLine(bresenhamPixels);
 
 			// Increasing each pixel X coordinate.
 			std::transform(
 				bresenhamPixels.begin(),
 				bresenhamPixels.end(),
 				bresenhamPixels.begin(),
-				[](const Point& pixel) {
-					return Point(pixel.x + 1, pixel.y);
+				[](const Pixel& pixel) {
+					return Pixel(pixel.x + 1, pixel.y);
 				}
 			);
 		}
 	}
 	// If the line is neither horizontal nor vertical, we have to reach for Bresenham rasterization algorithm.
 	else {
-
+		for (int x = maxCoordinate - 2; x >= 0; x--) {
+			// Bresenham rasterization algorithm.
+			auto startPoint(Pixel(x, 0));
+			auto endPoint = getEndPointForBresenham(Pixel(x, 0), angleOfRotation, maxCoordinate);
+			std::vector<Pixel> rasterizedLine = bresenham(Pixel(x, 0), endPoint);  // Rasterization method.
+			addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
+		}
+		for (int y = 0; y < maxCoordinate; y++) {
+			// Bresenham rasterization algorithm.
+			std::vector<Pixel> rasterizedLine = bresenham(Pixel(0, y), getEndPointForBresenham(Pixel(0, y), angleOfRotation, maxCoordinate));  // Rasterization method.
+			addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
+		}
 	}
 }
 
@@ -414,13 +464,13 @@ void LineSweeping::sweep() {
 /******************************************************************************************************************************/
 /******************************************************************************************************************************/
 // POINT TYPE
-Point::Point() :
+Pixel::Pixel() :
 	x(0),
 	y(0),
 	segmentID(-1)
 {}
 
-Point::Point(const int x, const int y, const int segmentID) :
+Pixel::Pixel(const int x, const int y, const int segmentID) :
 	x(x),
 	y(y),
 	segmentID(segmentID)
