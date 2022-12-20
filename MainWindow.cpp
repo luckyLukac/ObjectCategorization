@@ -38,7 +38,7 @@ MainWindow::MainWindow() :
 // Loading the F4 chain code.
 void MainWindow::loadF4(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	wxFileDialog fd(this, _("Open TXT file"), "", "", "ZXZ files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, _("Open TXT file"), "", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
@@ -57,8 +57,6 @@ void MainWindow::loadF4(wxCommandEvent& event) {
 	image->Refresh();
 }
 
-#include <chrono>
-
 // Multi sweep algorithm event for object categorization.
 void MainWindow::multiSweep(wxCommandEvent& event) {
 	// If a chain code is not set, we cannot sweep the object.
@@ -70,22 +68,10 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	
 
 	// Sweeping the object.
-	auto start = std::chrono::steady_clock::now();
-	
 	sweep.clearSegments();				      // Clearing potential previously calculated segments.
 	sweep.fillShape();						  // Filling the object.
 
-
-	for (int i = 0; i <= 90; i += 15) {
-		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
-		sweep.sweep();						      // Sweeping the object with the sweep line.
-		wxMessageBox("Das Ende", "Info", wxOK | wxICON_INFORMATION);
-		image->Refresh();
-	}
-	
-
-	auto end = std::chrono::steady_clock::now();
-	auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-	wxMessageBox(std::to_string(time) + " ms", "Info", wxOK | wxICON_INFORMATION);
-
+	sweep.setAngleOfRotation(toRadians(0));   // Setting the angle of rotation for the sweep line.
+	sweep.sweep();						      // Sweeping the object with the sweep line.
+	image->Refresh();
 }

@@ -228,6 +228,10 @@ void LineSweeping::plotInput(wxDC& dc) const {
 	for (const Pixel& point : coordinates) {
 		fillRectangle(dc, point.x, -point.y + maxCoordinate, 1, pen, brush);
 	}
+
+	for (const Pixel& p : coordinatesFillTEMP) {
+		fillRectangle(dc, p.x, -p.y + maxCoordinate, 1, pen, brush);
+	}
 }
 
 // Plotting the object bounding box.
@@ -335,70 +339,121 @@ void LineSweeping::fillShape() {
 	// Creating two stacks for filling the shape.
 	std::stack<unsigned int> leftStack;
 	std::stack<unsigned int> rightStack;
+	std::stack<bool> leftInside;
+	std::stack<bool> rightInside;
+	long startCoordinate = 0;
 
-	//// Iterating through the chain code and filling the shape.
-	//for (unsigned int i = 0; i < chainCode.size(); i++) {
-	//	// Getting the chain code elemenz and the X and Y coordinates of the pixel.
-	//	const char code = static_cast<char>(chainCode[i]);
-	//	const unsigned int x = coordinates[i].x;
-	//	const unsigned int y = coordinates[i].y;
+	// Iterating through the chain codes and filling the shape.
+	for (const ChainCode& chainCode : chainCodes) {
+		for (unsigned int i = 0; i < chainCode.code.size(); i++) {
+			// Getting the chain code element and the X and Y coordinates of the pixel.
+			const short code = chainCode.code[i];
+			const unsigned int x = coordinates[startCoordinate + i].x;
+			const unsigned int y = coordinates[startCoordinate + i].y;
 
-	//	// Setting the current pixel to edge.
-	//	pixelField[y][x] = Position::edge;
+			// If the instruction is to go up, the left stack is pushed to if the right stack is empty.
+			if (code == 1) {
+				const bool leftPixelInside = pixelField[y][x] == Position::inside;
 
-	//	// If the instruction is to go up, the left stack is pushed to if the right stack is empty.
-	//	if (code == '1') {
-	//		if (!rightStack.empty()) {
-	//			// Getting the top element from the right stack.
-	//			const unsigned int right = rightStack.top();
-	//			rightStack.pop();
+				if (!rightStack.empty()) {
+					// Getting the top element from the right stack.
+					const unsigned int right = rightStack.top();
+					rightStack.pop();
 
-	//			// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
-	//			if (right > x) {
-	//				for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
-	//					if (pixelField[y][pixelX] == Position::undefined) {
-	//						pixelField[y][pixelX] = Position::inside;
-	//					}
-	//				}
-	//			}
-	//			// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
-	//			else {
-	//				for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
-	//					pixelField[y][pixelX] = Position::outside;
-	//				}
-	//			}
-	//		}
-	//		else {
-	//			leftStack.push(x);
-	//		}
-	//	}
-	//	// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
-	//	else if (code == '3') {
-	//		if (!leftStack.empty()) {
-	//			// Getting the top element from the left stack.
-	//			const unsigned int left = leftStack.top();
-	//			leftStack.pop();
+					const bool rightPixelInside = rightInside.top();
+					rightInside.pop();
 
-	//			// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
-	//			if (left < x) {
-	//				for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
-	//					if (pixelField[y][pixelX] == Position::undefined) {
-	//						pixelField[y][pixelX] = Position::inside;
-	//					}
-	//				}
-	//			}
-	//			// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
-	//			else {
-	//				for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
-	//					pixelField[y][pixelX] = Position::outside;
-	//				}
-	//			}
-	//		}
-	//		else {
-	//			rightStack.push(x);
-	//		}
-	//	}
-	//}
+					// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
+					if (right > x) {
+						for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
+							if (leftPixelInside && rightPixelInside) {
+								pixelField[y][pixelX] = Position::outside;
+							}
+							else if (pixelField[y][pixelX] == Position::undefined) {
+								pixelField[y][pixelX] = Position::inside;
+							}
+						}
+					}
+					// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
+					else {
+						if (leftPixelInside && rightPixelInside) {
+							for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
+								pixelField[y][pixelX] = Position::inside;
+							}
+						}
+						else {
+							for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
+								pixelField[y][pixelX] = Position::outside;
+							}
+						}
+					}
+				}
+				else {
+					leftStack.push(x);
+					leftInside.push(leftPixelInside);
+				}
+			}
+			// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
+			else if (code == 3) {
+				const bool rightPixelInside = pixelField[y][x] == Position::inside;
+
+				if (!leftStack.empty()) {
+					// Getting the top element from the left stack.
+					const unsigned int left = leftStack.top();
+					leftStack.pop();
+
+					const bool leftPixelInside = leftInside.top();
+					leftInside.pop();
+
+					// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
+					if (left < x) {
+						for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
+							if (leftPixelInside && rightPixelInside) {
+								pixelField[y][pixelX] = Position::outside;
+							}
+							else if (pixelField[y][pixelX] == Position::undefined) {
+								pixelField[y][pixelX] = Position::inside;
+							}
+						}
+					}
+					// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
+					else {
+						if (leftPixelInside && rightPixelInside) {
+							for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
+								pixelField[y][pixelX] = Position::inside;
+							}
+						}
+						else {
+							for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
+								pixelField[y][pixelX] = Position::outside;
+							}
+						}
+					}
+				}
+				else {
+					rightStack.push(x);
+					rightInside.push(rightPixelInside);
+				}
+			}
+
+			// Setting the current pixel to edge.
+			pixelField[y][x] = Position::edge;
+		}
+
+		leftStack = std::stack<unsigned int>();
+		rightStack = std::stack<unsigned int>();
+		leftInside = std::stack<bool>();
+		rightInside = std::stack<bool>();
+		startCoordinate += chainCode.code.size();
+	}
+	
+
+	for (size_t i = 0; i < maxCoordinate; i++) {
+		for (size_t j = 0; j < maxCoordinate; j++) {
+			if (pixelField[i][j] == Position::inside)
+				coordinatesFillTEMP.push_back(Pixel(j, i));
+		}
+	}
 }
 
 // Sweeping the object.

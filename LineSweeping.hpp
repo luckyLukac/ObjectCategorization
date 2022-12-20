@@ -44,6 +44,7 @@ private:
 	wxWindow* drawWindow = nullptr;		 // Draw window.
 	std::vector<ChainCode> chainCodes;   // F4 chain code.
 	std::vector<Pixel> coordinates;      // Point coordinates.
+	std::vector<Pixel> coordinatesFillTEMP;      // Point coordinates.
 	PixelField pixelField;				 // Pixel field with pixel positions according to the object (edge, outside or inside).
 	int maxCoordinate = 0;				 // Maximum coordinate.
 
@@ -75,5 +76,3 @@ public:
 	void fillShape();										  // Filling the loaded shape.
 	void sweep();											  // Sweeping the object.
 };
-
-
