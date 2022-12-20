@@ -47,10 +47,10 @@ void MainWindow::loadF4(wxCommandEvent& event) {
 
 	// Reading a file with the F4 chain code.
 	std::string file = fd.GetPath().ToStdString();
-	std::vector<std::byte> chainCode = sweep.readFile(file);
+	bool success = sweep.readFile(file);
 
 	// Converting the F4 chain code to coordinates and drawing it on the image panel.
-	sweep.setF4(chainCode);
+	//sweep.setF4(chainCode);
 	image->clearAllFlags();
 	image->setF4Flag();
 	image->setSweepPointer(&sweep);
@@ -74,13 +74,18 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	
 	sweep.clearSegments();				      // Clearing potential previously calculated segments.
 	sweep.fillShape();						  // Filling the object.
-	sweep.setAngleOfRotation(toRadians(0));   // Setting the angle of rotation for the sweep line.
-	sweep.sweep();						      // Sweeping the object with the sweep line.
+
+
+	for (int i = 0; i <= 90; i += 15) {
+		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
+		sweep.sweep();						      // Sweeping the object with the sweep line.
+		wxMessageBox("Das Ende", "Info", wxOK | wxICON_INFORMATION);
+		image->Refresh();
+	}
 	
 
 	auto end = std::chrono::steady_clock::now();
 	auto time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	wxMessageBox(std::to_string(time) + " ms", "Info", wxOK | wxICON_INFORMATION);
 
-	//image->Refresh();
 }

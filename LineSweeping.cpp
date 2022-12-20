@@ -3,6 +3,7 @@
 #include <limits>
 #include <stack>
 
+#include "ChainCode.hpp"
 #include "HelperFunctions.hpp"
 #include "LineSweeping.hpp"
 
@@ -10,39 +11,44 @@
 // PRIVATE HELPER METHODS
 // Transforming chain code to coordinates.
 void LineSweeping::calculateCoordinatesFromChainCode() {
-	coordinates.clear();  // Clearing the previous coordinates.
-
 	// Current point and X and Y coordinates.
 	Pixel point;
 	int currentX = 0;
 	int currentY = -0;
 
 	// Adding new coordinates according to the chain code.
-	for (const std::byte& chainElement : chainCode) {
-		const int direction = static_cast<int>(chainElement) - 48;  // Casting the byte to char.
+	for (const ChainCode& chainCode : chainCodes) {
+		// Setting the start point.
+		currentX = chainCode.startPoint.x;
+		currentY = chainCode.startPoint.y;
 
-		// 0 means right.
-		if (direction == 0) {
-			currentX++;
-		}
-		// 1 means up.
-		else if (direction == 1) {
-			currentY++;
-		}
-		// 2 means left.
-		else if (direction == 2) {
-			currentX--;
-		}
-		// 3 means down.
-		else if (direction == 3) {
-			currentY--;
-		}
+		// Iterating through the chain code.
+		for (const short& chainElement : chainCode.code) {
+			const short direction = chainElement;  // Casting the byte to char.
 
-		// Adding a new coordinate to the vector.
-		point.x = currentX;
-		point.y = currentY;
-		point.segmentID = -1;
-		coordinates.push_back(point);
+			// 0 means right.
+			if (direction == 0) {
+				currentX++;
+			}
+			// 1 means up.
+			else if (direction == 1) {
+				currentY++;
+			}
+			// 2 means left.
+			else if (direction == 2) {
+				currentX--;
+			}
+			// 3 means down.
+			else if (direction == 3) {
+				currentY--;
+			}
+
+			// Adding a new coordinate to the vector.
+			point.x = currentX;
+			point.y = currentY;
+			point.segmentID = -1;
+			coordinates.push_back(point);
+		}
 	}
 }
 
@@ -81,32 +87,6 @@ void LineSweeping::calculateBoundingBox() {
 			yMax = coordinates[i].y;
 			yMaxIndex = i;
 		}
-	}
-
-	// Checking whether the chain code is anti-clockwise.
-	const char topYChainCode = static_cast<char>(chainCode[yMaxIndex]);
-	const char nextTopYChainCode = static_cast<char>(chainCode[(yMaxIndex + 1) % chainCode.size()]);
-	const bool isAntiClockwise = !(topYChainCode == '0' && nextTopYChainCode == '3') && !(topYChainCode == '0' && nextTopYChainCode == '0') && !(topYChainCode == '1' && nextTopYChainCode == '0');
-	
-	// As we programmers do not tend to overcomplicate our lives, the chain
-	// code is reversed if it is written in anti-clockwise orientation.
-	if (isAntiClockwise) {
-		// In order to reverse a chain code, the vector must be reversed along with the chain code instructions.
-		std::reverse(chainCode.begin(), chainCode.end());
-		std::transform(
-			chainCode.begin(),
-			chainCode.end(),
-			chainCode.begin(),
-			[](const std::byte& element) {
-				const int ch = static_cast<int>(element) - 48;
-				return static_cast<std::byte>(((ch + 2) % 4) + 48);
-			}
-		);
-
-		// Calculation of new coordinates and the bounding box.
-		calculateCoordinatesFromChainCode();
-		calculateBoundingBox();
-		return;
 	}
 
 	// Moving the bounding box to the left upper corner.
@@ -154,6 +134,21 @@ void LineSweeping::calculateBoundingBox() {
 
 	// Setting the max coordinates.
 	this->maxCoordinate = magnifiedPivotCoordinate + 1;
+	const double divideFactor = this->maxCoordinate / 1000.0;
+
+	if (divideFactor > 1.0) {
+		// Resizing the points to 1000x1000.
+		std::transform(
+			coordinates.begin(),
+			coordinates.end(),
+			coordinates.begin(),
+			[&divideFactor](Pixel point) {
+				return Pixel(point.x / divideFactor, point.y / divideFactor);
+			}
+		);
+
+		this->maxCoordinate = 1001;
+	}
 
 	// Creating the pixel field.
 	pixelField = std::vector<std::vector<Position>>(this->maxCoordinate, std::vector<Position>(this->maxCoordinate, Position::undefined));
@@ -255,19 +250,6 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 
 
 // GETTERS AND SETTERS
-// Setting F4 chain code.
-void LineSweeping::setF4(const std::vector<std::byte>& chainCode) {
-	this->chainCode.clear();  // Clearing the previous chain code.
-	coordinates.clear();      // Clearing the previous coordinates.
-
-	// Adding the chain code to the object.
-	this->chainCode = chainCode;
-
-	// Calculation of coordinates and the bounding box.
-	calculateCoordinatesFromChainCode();
-	calculateBoundingBox();
-}
-
 // Setting draw panel.
 void LineSweeping::setDrawPanel(wxWindow* drawWindow) {
 	this->drawWindow = drawWindow;
@@ -292,27 +274,60 @@ void LineSweeping::setAngleOfRotation(const double angle) {
 
 // PUBLIC METHODS
 // Reading a file.
-std::vector<std::byte> LineSweeping::readFile(std::string file) const {
-	std::vector<std::byte> chainCode;
-
+bool LineSweeping::readFile(std::string file) {
 	// Opening a file.
 	std::ifstream in(file);
 
 	// If a file is not open, we do not panic but abort the process.
 	if (!in.is_open()) {
-		return chainCode;
+		return false;
 	}
 
-	// Reading a file character by character.
-	char c;
-	while (in.read(&c, 1)) {
-		// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
-		if (c == '0' || c == '1' || c == '2' || c == '3') {
-			chainCode.push_back(static_cast<std::byte>(c));
+	// Clearing the previous coordinates.
+	chainCodes.clear();
+	coordinates.clear();
+
+	// Reading first line.
+	std::string firstLine;
+	std::getline(in, firstLine);
+	if (firstLine != "CC Multi") {
+		return false;
+	}
+
+	// Reading the chain code.
+	bool clockwise = false;
+	int startX = 0;
+	int startY = 0;
+
+	std::string value;
+	while (std::getline(in, value, ';')) {
+		// Reading clockwise or anti-clockwise orientation.
+		std::getline(in, value, ';');
+		if (value == "CW") {
+			clockwise = true;
 		}
+		else {
+			clockwise = false;
+		}
+
+		// Reading the starting point.
+		std::getline(in, value, ',');
+		startX = std::stoi(value);
+		std::getline(in, value, ';');
+		startY = -std::stoi(value);
+		std::getline(in, value, ';');
+
+		// Adding a new chain code.
+		std::getline(in, value);
+		ChainCode chainCode(value, clockwise, Pixel(startX, startY));
+		chainCodes.push_back(chainCode);
 	}
 
-	return chainCode;
+	// Calculating the coordinates.
+	calculateCoordinatesFromChainCode();
+	calculateBoundingBox();
+
+	return true;
 }
 
 // Filling the loaded shape.
@@ -321,69 +336,69 @@ void LineSweeping::fillShape() {
 	std::stack<unsigned int> leftStack;
 	std::stack<unsigned int> rightStack;
 
-	// Iterating through the chain code and filling the shape.
-	for (unsigned int i = 0; i < chainCode.size(); i++) {
-		// Getting the chain code elemenz and the X and Y coordinates of the pixel.
-		const char code = static_cast<char>(chainCode[i]);
-		const unsigned int x = coordinates[i].x;
-		const unsigned int y = coordinates[i].y;
+	//// Iterating through the chain code and filling the shape.
+	//for (unsigned int i = 0; i < chainCode.size(); i++) {
+	//	// Getting the chain code elemenz and the X and Y coordinates of the pixel.
+	//	const char code = static_cast<char>(chainCode[i]);
+	//	const unsigned int x = coordinates[i].x;
+	//	const unsigned int y = coordinates[i].y;
 
-		// Setting the current pixel to edge.
-		pixelField[y][x] = Position::edge;
+	//	// Setting the current pixel to edge.
+	//	pixelField[y][x] = Position::edge;
 
-		// If the instruction is to go up, the left stack is pushed to if the right stack is empty.
-		if (code == '1') {
-			if (!rightStack.empty()) {
-				// Getting the top element from the right stack.
-				const unsigned int right = rightStack.top();
-				rightStack.pop();
+	//	// If the instruction is to go up, the left stack is pushed to if the right stack is empty.
+	//	if (code == '1') {
+	//		if (!rightStack.empty()) {
+	//			// Getting the top element from the right stack.
+	//			const unsigned int right = rightStack.top();
+	//			rightStack.pop();
 
-				// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
-				if (right > x) {
-					for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
-						if (pixelField[y][pixelX] == Position::undefined) {
-							pixelField[y][pixelX] = Position::inside;
-						}
-					}
-				}
-				// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
-				else {
-					for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
-						pixelField[y][pixelX] = Position::outside;
-					}
-				}
-			}
-			else {
-				leftStack.push(x);
-			}
-		}
-		// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
-		else if (code == '3') {
-			if (!leftStack.empty()) {
-				// Getting the top element from the left stack.
-				const unsigned int left = leftStack.top();
-				leftStack.pop();
+	//			// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
+	//			if (right > x) {
+	//				for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
+	//					if (pixelField[y][pixelX] == Position::undefined) {
+	//						pixelField[y][pixelX] = Position::inside;
+	//					}
+	//				}
+	//			}
+	//			// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
+	//			else {
+	//				for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
+	//					pixelField[y][pixelX] = Position::outside;
+	//				}
+	//			}
+	//		}
+	//		else {
+	//			leftStack.push(x);
+	//		}
+	//	}
+	//	// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
+	//	else if (code == '3') {
+	//		if (!leftStack.empty()) {
+	//			// Getting the top element from the left stack.
+	//			const unsigned int left = leftStack.top();
+	//			leftStack.pop();
 
-				// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
-				if (left < x) {
-					for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
-						if (pixelField[y][pixelX] == Position::undefined) {
-							pixelField[y][pixelX] = Position::inside;
-						}
-					}
-				}
-				// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
-				else {
-					for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
-						pixelField[y][pixelX] = Position::outside;
-					}
-				}
-			}
-			else {
-				rightStack.push(x);
-			}
-		}
-	}
+	//			// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
+	//			if (left < x) {
+	//				for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
+	//					if (pixelField[y][pixelX] == Position::undefined) {
+	//						pixelField[y][pixelX] = Position::inside;
+	//					}
+	//				}
+	//			}
+	//			// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
+	//			else {
+	//				for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
+	//					pixelField[y][pixelX] = Position::outside;
+	//				}
+	//			}
+	//		}
+	//		else {
+	//			rightStack.push(x);
+	//		}
+	//	}
+	//}
 }
 
 // Sweeping the object.
@@ -456,22 +471,3 @@ void LineSweeping::sweep() {
 		}
 	}
 }
-
-
-/******************************************************************************************************************************/
-/******************************************************************************************************************************/
-/******************************************************************************************************************************/
-/******************************************************************************************************************************/
-/******************************************************************************************************************************/
-// POINT TYPE
-Pixel::Pixel() :
-	x(0),
-	y(0),
-	segmentID(-1)
-{}
-
-Pixel::Pixel(const int x, const int y, const int segmentID) :
-	x(x),
-	y(y),
-	segmentID(segmentID)
-{}

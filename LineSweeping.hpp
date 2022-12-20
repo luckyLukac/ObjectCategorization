@@ -3,23 +3,15 @@
 #include <vector>
 #include <wx/dcbuffer.h>
 
+#include "ChainCode.hpp"
+#include "Pixel.hpp"
+
 
 // CONSTANTS
 const double MAGNIFY_FACTOR = 1.5;
 
 
 // STRUCTURES
-// Point struct.
-struct Pixel {
-	int x;
-	int y;
-	int segmentID;
-
-	Pixel();
-	Pixel(const int x, const int y, const int segmentID = -1);
-};
-
-
 // Segment struct.
 struct Segment {
 	double angle;						// Sweep-line angle.
@@ -50,7 +42,7 @@ class LineSweeping {
 private:
 	// PRIVATE VARIABLES
 	wxWindow* drawWindow = nullptr;		 // Draw window.
-	std::vector<std::byte> chainCode;    // F4 chain code.
+	std::vector<ChainCode> chainCodes;   // F4 chain code.
 	std::vector<Pixel> coordinates;      // Point coordinates.
 	PixelField pixelField;				 // Pixel field with pixel positions according to the object (edge, outside or inside).
 	int maxCoordinate = 0;				 // Maximum coordinate.
@@ -73,14 +65,13 @@ public:
 	void plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasterizedLine) const;  // Plotting the Bresenham line.
 
 	// GETTERS AND SETTERS
-	void setF4(const std::vector<std::byte>& chainCode);      // Setting F4 chain code.
 	void setDrawPanel(wxWindow* drawWindow);        		  // Setting draw panel.
 	bool isChainCodeSet() const;							  // Returning true if a chain code is set.
 	void clearSegments();									  // Clearing previous segments.
 	void setAngleOfRotation(const double angle);			  // Setting the angle of rotation (given in radians).
 
 	// PUBLIC METHODS
-	std::vector<std::byte> readFile(std::string file) const;  // Reading a file.
+	bool readFile(std::string file);					      // Reading a file.
 	void fillShape();										  // Filling the loaded shape.
 	void sweep();											  // Sweeping the object.
 };

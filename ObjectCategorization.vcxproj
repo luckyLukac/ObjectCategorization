@@ -124,6 +124,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\wxWidgets-3.2.1\include\msvc;C:\wxWidgets-3.2.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -209,17 +210,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="ChainCode.hpp" />
     <ClInclude Include="HelperFunctions.hpp" />
     <ClInclude Include="LineSweeping.hpp" />
     <ClInclude Include="MainWindow.hpp" />
+    <ClInclude Include="Pixel.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="wxImagePanel.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="ChainCode.cpp" />
     <ClCompile Include="HelperFunctions.cpp" />
     <ClCompile Include="LineSweeping.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="Pixel.cpp" />
     <ClCompile Include="wxImagePanel.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
