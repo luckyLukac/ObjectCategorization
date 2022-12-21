@@ -71,7 +71,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.clearSegments();				      // Clearing potential previously calculated segments.
 	sweep.fillShape();						  // Filling the object.
 
-	sweep.setAngleOfRotation(toRadians(0));   // Setting the angle of rotation for the sweep line.
-	sweep.sweep();						      // Sweeping the object with the sweep line.
-	image->Refresh();
+	//sweep.setAngleOfRotation(toRadians(0));   // Setting the angle of rotation for the sweep line.
+	//sweep.sweep();						      // Sweeping the object with the sweep line.
+	//image->Refresh();
 }

@@ -229,9 +229,9 @@ void LineSweeping::plotInput(wxDC& dc) const {
 		fillRectangle(dc, point.x, -point.y + maxCoordinate, 1, pen, brush);
 	}
 
-	for (const Pixel& p : coordinatesFillTEMP) {
-		fillRectangle(dc, p.x, -p.y + maxCoordinate, 1, pen, brush);
-	}
+	//for (const Pixel& p : coordinatesFillTEMP) {
+	//	fillRectangle(dc, p.x, -p.y + maxCoordinate, 1, pen, brush);
+	//}
 }
 
 // Plotting the object bounding box.
@@ -336,6 +336,11 @@ bool LineSweeping::readFile(std::string file) {
 
 // Filling the loaded shape.
 void LineSweeping::fillShape() {
+	wxClientDC dc(drawWindow);
+
+	pixelField = std::vector<std::vector<Position>>(this->maxCoordinate, std::vector<Position>(this->maxCoordinate, Position::undefined));
+
+
 	// Creating two stacks for filling the shape.
 	std::stack<unsigned int> leftStack;
 	std::stack<unsigned int> rightStack;
@@ -346,6 +351,10 @@ void LineSweeping::fillShape() {
 	// Iterating through the chain codes and filling the shape.
 	for (const ChainCode& chainCode : chainCodes) {
 		for (unsigned int i = 0; i < chainCode.code.size(); i++) {
+			if (i == 4000) {
+				int adnuindasui = 5692;
+			}
+
 			// Getting the chain code element and the X and Y coordinates of the pixel.
 			const short code = chainCode.code[i];
 			const unsigned int x = coordinates[startCoordinate + i].x;
@@ -368,9 +377,11 @@ void LineSweeping::fillShape() {
 						for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
 							if (leftPixelInside && rightPixelInside) {
 								pixelField[y][pixelX] = Position::outside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH);
 							}
 							else if (pixelField[y][pixelX] == Position::undefined) {
 								pixelField[y][pixelX] = Position::inside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH);
 							}
 						}
 					}
@@ -379,11 +390,13 @@ void LineSweeping::fillShape() {
 						if (leftPixelInside && rightPixelInside) {
 							for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
 								pixelField[y][pixelX] = Position::inside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH);
 							}
 						}
 						else {
 							for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
 								pixelField[y][pixelX] = Position::outside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH);
 							}
 						}
 					}
@@ -391,6 +404,7 @@ void LineSweeping::fillShape() {
 				else {
 					leftStack.push(x);
 					leftInside.push(leftPixelInside);
+					fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH);
 				}
 			}
 			// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
@@ -410,9 +424,11 @@ void LineSweeping::fillShape() {
 						for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
 							if (leftPixelInside && rightPixelInside) {
 								pixelField[y][pixelX] = Position::outside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH);
 							}
 							else if (pixelField[y][pixelX] == Position::undefined) {
 								pixelField[y][pixelX] = Position::inside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH);
 							}
 						}
 					}
@@ -421,11 +437,13 @@ void LineSweeping::fillShape() {
 						if (leftPixelInside && rightPixelInside) {
 							for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
 								pixelField[y][pixelX] = Position::inside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH);
 							}
 						}
 						else {
 							for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
 								pixelField[y][pixelX] = Position::outside;
+								fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH);
 							}
 						}
 					}
@@ -433,6 +451,7 @@ void LineSweeping::fillShape() {
 				else {
 					rightStack.push(x);
 					rightInside.push(rightPixelInside);
+					fillRectangle(dc, x, maxCoordinate - y, 1, *wxBLUE_PEN, *wxBLUE_BRUSH);
 				}
 			}
 
@@ -450,8 +469,8 @@ void LineSweeping::fillShape() {
 
 	for (size_t i = 0; i < maxCoordinate; i++) {
 		for (size_t j = 0; j < maxCoordinate; j++) {
-			if (pixelField[i][j] == Position::inside)
-				coordinatesFillTEMP.push_back(Pixel(j, i));
+			//if (pixelField[i][j] == Position::inside)
+			//	coordinatesFillTEMP.push_back(Pixel(j, i));
 		}
 	}
 }
