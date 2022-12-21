@@ -56,8 +56,9 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 	const int xRef = start.x;
 	const int yRef = start.y;
 	const int xCandidate = xRef + (maxCoordinate - yRef) / angle;
+	const int yCandidate = yRef + (maxCoordinate - xRef) / angle;
 
-	// If the angle is smaller than 45°.
+	// If the angle is smaller than 90°.
 	if (angle < std::numbers::pi / 2) {
 		// If the X candidate coordinate is smaller than the maximal coordinate, we are all good.
 		if (xCandidate < maxCoordinate) {
@@ -68,17 +69,15 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 			return Pixel(maxCoordinate, yRef + (maxCoordinate - xRef) * angle);
 		}
 	}
-	// If the angle is greater than 45°.
+	// If the angle is greater than 90°.
 	else {
-		const int newXCandidate = xCandidate - xRef;
-
 		// If the new X coordinate is greater than 0, we are all good.
-		if (newXCandidate < 0) {
-			return Pixel(0, yRef - angle * xRef);
+		if (xRef == 0) {
+			return Pixel(yRef - angle * xRef, 0);
 		}
 		// Otherwise, the X coordinate is bound by the minimum coordinate.
 		else {
-			return Pixel(newXCandidate, maxCoordinate);
+			return Pixel(maxCoordinate, xCandidate);
 		}
 	}
 }

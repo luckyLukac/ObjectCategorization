@@ -56,6 +56,7 @@ void MainWindow::loadF4(wxCommandEvent& event) {
 	image->setSweepPointer(&sweep);
 	image->Refresh();
 }
+#include <chrono>
 
 // Multi sweep algorithm event for object categorization.
 void MainWindow::multiSweep(wxCommandEvent& event) {
@@ -66,12 +67,21 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 		return;
 	}
 	
+	auto start = std::chrono::steady_clock::now();
 
 	// Sweeping the object.
-	sweep.clearSegments();				      // Clearing potential previously calculated segments.
-	sweep.fillShape();						  // Filling the object.
+	for (int i = 0; i <= 180; i+=15) {
+		sweep.clearSegments();				      // Clearing potential previously calculated segments.
+		sweep.fillShape();						  // Filling the object.
+		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
+		sweep.sweep();						      // Sweeping the object with the sweep line.
+	}
+	
+	auto end = std::chrono::steady_clock::now();
 
-	//sweep.setAngleOfRotation(toRadians(0));   // Setting the angle of rotation for the sweep line.
-	//sweep.sweep();						      // Sweeping the object with the sweep line.
-	//image->Refresh();
+	long long time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	std::stringstream ss;
+	ss << "Time: " << time << " ms";
+
+	wxMessageBox(ss.str(), "", wxOK);
 }

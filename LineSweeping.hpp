@@ -44,20 +44,20 @@ private:
 	wxWindow* drawWindow = nullptr;		 // Draw window.
 	std::vector<ChainCode> chainCodes;   // F4 chain code.
 	std::vector<Pixel> coordinates;      // Point coordinates.
-	std::vector<Pixel> coordinatesFillTEMP;      // Point coordinates.
 	PixelField pixelField;				 // Pixel field with pixel positions according to the object (edge, outside or inside).
 	int maxCoordinate = 0;				 // Maximum coordinate.
+	double plotRatio = 1.0;			     // Ratio factor for drawing.
 
 	double angleOfRotation = 0.0;		 // Sweep line angle of rotation [0°-180°].
 	std::vector<Pixel> midPoints;		 // Middle points found while sweeping.
 	std::vector<Segment> segments;		 // Vector of segments.
 
 	// PRIVATE HELPER METHODS
-	void calculateCoordinatesFromChainCode();																					// Transforming chain code to coordinates.
-	void calculateBoundingBox();																							    // Calculation of a bounding box according to point coordinates.
-	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush) const;  // Filling a rectangle at X and Y coordinates.
-	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;						// Finding edge pixel pairs.
-	void addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine);												// Adding the current midpoint and plotting the Bresenham line.
+	void calculateCoordinatesFromChainCode();																											  // Transforming chain code to coordinates.
+	void calculateBoundingBox();																														  // Calculation of a bounding box according to point coordinates.
+	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush, const double ratio = 1.0) const;  // Filling a rectangle at X and Y coordinates.
+	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;																	  // Finding edge pixel pairs.
+	void addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine);																		  // Adding the current midpoint and plotting the Bresenham line.
 
 public:
 	// PLOT METHODS
