@@ -51,33 +51,70 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 		return Pixel(start.x, maxCoordinate);
 	}
 	
-	// Otherwise, some calculations have to be done.
-	// Getting the reference coordinates.
-	const int xRef = start.x;
-	const int yRef = start.y;
-	const int xCandidate = xRef + (maxCoordinate - yRef) / angle;
-	const int yCandidate = yRef + (maxCoordinate - xRef) / angle;
-
-	// If the angle is smaller than 90°.
-	if (angle < std::numbers::pi / 2) {
+	// Angles in range: (0°, 45°).
+	if (angle < toRadians(45.0)) {
+		const int x = start.y * std::tan(toRadians(90) - angle);
+		const int y = (x - maxCoordinate) * std::tan(angle);
+		const int y2 = maxCoordinate - (maxCoordinate - start.x) * std::tan(angle);
+	
 		// If the X candidate coordinate is smaller than the maximal coordinate, we are all good.
-		if (xCandidate < maxCoordinate) {
-			return Pixel(xCandidate, maxCoordinate);
+		if (x < maxCoordinate) {
+			return Pixel(x, 0);
 		}
-		// Otherwise, the X coordinate is bound by the maximum coordinate.
+		else if (start.y < maxCoordinate) {
+			return Pixel(maxCoordinate, y);
+		}
 		else {
-			return Pixel(maxCoordinate, yRef + (maxCoordinate - xRef) * angle);
+			return Pixel(maxCoordinate, y2);
 		}
 	}
-	// If the angle is greater than 90°.
-	else {
-		// If the new X coordinate is greater than 0, we are all good.
-		if (xRef == 0) {
-			return Pixel(yRef - angle * xRef, 0);
+	// Angles in range: (45°, 90°).
+	else if (angle < toRadians(90.0)) {
+		const int x = start.y * std::tan(toRadians(90) - angle);
+		const int x2 = start.x + maxCoordinate * std::tan(toRadians(90) - angle);
+		const int y = maxCoordinate - (maxCoordinate - start.x) / std::tan(toRadians(90) - angle);
+
+		// If the X candidate coordinate is smaller than the maximal coordinate, we are all good.
+		if (start.y < maxCoordinate) {
+			return Pixel(x, 0);
 		}
-		// Otherwise, the X coordinate is bound by the minimum coordinate.
+		else if (x2 < maxCoordinate) {
+			return Pixel(x2, 0);
+		}
 		else {
-			return Pixel(maxCoordinate, xCandidate);
+			return Pixel(maxCoordinate, y);
+		}
+	}
+	// Angles in range: (90°, 135°).
+	else if (angle < toRadians(135.0)) {
+		const int y = maxCoordinate - (start.x / std::tan(angle - toRadians(90)));
+		const int x = -y * std::tan(angle - toRadians(90));
+		const int x2 = maxCoordinate - (start.y / std::tan(toRadians(90) - (angle - toRadians(90))));
+
+		if (y > 0) {
+			return Pixel(0, y);
+		}
+		else if (start.x < maxCoordinate) {
+			return Pixel(x, 0);
+		}
+		else {
+			return Pixel(x2, 0);
+		}
+	}
+	// Angles in range: (135°, 180°).
+	else if (angle < toRadians(180.0)) {
+		const int y = maxCoordinate - (start.x / std::tan(angle - toRadians(90)));
+		const int y2 = start.y - maxCoordinate * std::tan(toRadians(90) - (angle - toRadians(90)));
+		const int x = maxCoordinate - (start.y / std::tan(toRadians(90) - (angle - toRadians(90))));
+
+		if (start.x < maxCoordinate) {
+			return Pixel(0, y);
+		}
+		else if (y2 > 0) {
+			return Pixel(0, y2);
+		}
+		else {
+			return Pixel(x, 0);
 		}
 	}
 }

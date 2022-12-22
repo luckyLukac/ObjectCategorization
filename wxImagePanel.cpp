@@ -21,7 +21,9 @@ namespace GUI {
 
 		// If a segment flag is set, 
 		if (segmentFlag) {
-			// TODO
+			sweep->plotInput(dc);        // Plotting the chain code shape.
+			sweep->plotBoundingBox(dc);  // Plotting the bounding box of the object.
+			sweep->plotSegments(dc);     // Plotting the segments of the sweep algorithm.
 		}
 	}
 
@@ -56,6 +58,11 @@ namespace GUI {
 	// Setting the F4 flag.
 	void wxImagePanel::setF4Flag() {
 		F4PlotFlag = true;
+	}
+
+	// Setting the segment flag.
+	void wxImagePanel::setSegmentFlag() {
+		segmentFlag = true;
 	}
 
 	// Clearing all flags.

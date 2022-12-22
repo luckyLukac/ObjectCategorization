@@ -206,7 +206,7 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine) {
 	// Plotting the rasterized line.
 	wxClientDC dc(drawWindow);
-	plotBresenhamLine(dc, rasterizedLine);
+	//plotBresenhamLine(dc, rasterizedLine);
 
 	// Finding the edge pixels that lie on the current rasterized line.
 	std::vector<Pixel> edgePixel = findEdgePixels(rasterizedLine);
@@ -219,10 +219,13 @@ void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& ras
 		
 		// If the center point lies inside of the object, a red rectangle is drawn there.
 		if (pixelField[y][x] == Position::inside) {
+			midPoints[y][x] = MidPoint(Pixel(x, y), Pixel(edgePixel[i - 1]), Pixel(edgePixel[i]), true, false);
+			midPointPixels.push_back(Pixel(x, y));
 			fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
 		}
 	}
 }
+
 
 
 // PLOT METHODS
@@ -254,6 +257,15 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 	// Plotting each pixel of the line.
 	for (const Pixel& pixel : rasterizedLine) {
 		fillRectangle(dc, pixel.x, -pixel.y + maxCoordinate, 1, *wxLIGHT_GREY_PEN, *wxLIGHT_GREY_BRUSH, plotRatio);
+	}
+}
+
+// Plotting the segments.
+void LineSweeping::plotSegments(wxDC& dc) const {
+	for (const Segment& segment : segments) {
+		for (const MidPoint& midPoint : segment.midPoints) {
+			fillRectangle(dc, midPoint.point.x, -midPoint.point.y + maxCoordinate, 2, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
+		}
 	}
 }
 
@@ -479,6 +491,7 @@ void LineSweeping::sweep() {
 
 	// Creating a Bresenham point vector.
 	std::vector<Pixel> bresenhamPixels(maxCoordinate);
+	midPoints = std::vector<std::vector<MidPoint>>(maxCoordinate, std::vector<MidPoint>(maxCoordinate, MidPoint()));
 
 	// If the line is horizontal, there is no need for sophisticated rasterization method.
 	if (isInTolerance(angleOfRotation, 0.0)) {
@@ -489,7 +502,6 @@ void LineSweeping::sweep() {
 
 		// Moving the rasterized line segment vertically.
 		for (int i = 0; i < maxCoordinate; i++) {
-			//plotBresenhamLine(dc, bresenhamPixels);
 			addCurrentMidpointFromSweepLine(bresenhamPixels);  // Adding midpoints according to the sweep line.
 
 			// Increasing each pixel Y coordinate.
@@ -512,7 +524,6 @@ void LineSweeping::sweep() {
 
 		// Moving the rasterized line segment vertically.
 		for (int i = 0; i < maxCoordinate; i++) {
-			//plotBresenhamLine(dc, bresenhamPixels);
 			addCurrentMidpointFromSweepLine(bresenhamPixels);
 
 			// Increasing each pixel X coordinate.
@@ -529,30 +540,99 @@ void LineSweeping::sweep() {
 	// If the line is neither horizontal nor vertical, we have to reach for Bresenham rasterization algorithm.
 	else {
 		if (toDegrees(angleOfRotation) < 90.0) {
-			for (int x = maxCoordinate - 2; x >= 0; x--) {
-				// Bresenham rasterization algorithm.
-				auto startPoint(Pixel(x, 0));
-				auto endPoint = getEndPointForBresenham(Pixel(x, 0), angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(Pixel(x, 0), endPoint);  // Rasterization method.
-				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
-			}
 			for (int y = 0; y < maxCoordinate; y++) {
 				// Bresenham rasterization algorithm.
-				std::vector<Pixel> rasterizedLine = bresenham(Pixel(0, y), getEndPointForBresenham(Pixel(0, y), angleOfRotation, maxCoordinate));  // Rasterization method.
+				Pixel startPoint(Pixel(0, y));
+				Pixel endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
+				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
+			}
+			for (int x = 0; x < maxCoordinate; x++) {
+				// Bresenham rasterization algorithm.
+				Pixel startPoint = Pixel(x, maxCoordinate);
+				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 		}
-		else {
-			for (int x = maxCoordinate - 2; x >= 0; x--) {
+		else if (toDegrees(angleOfRotation) < 180.0) {
+			for (int x = 0; x < maxCoordinate; x++) {
 				// Bresenham rasterization algorithm.
-				auto endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(Pixel(x, maxCoordinate), endPoint);  // Rasterization method.
+				Pixel startPoint(Pixel(x, maxCoordinate));
+				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 			for (int y = maxCoordinate; y >= 0; y--) {
 				// Bresenham rasterization algorithm.
-				std::vector<Pixel> rasterizedLine = bresenham(Pixel(0, y), getEndPointForBresenham(Pixel(0, y), angleOfRotation, maxCoordinate));  // Rasterization method.
+				auto startPoint(Pixel(maxCoordinate, y));
+				auto endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
+			}
+		}
+	}
+}
+
+// Extracting segments from the swept object.
+void LineSweeping::extractSegments() {
+	// Iterating through midpoints and extracting segments.
+	for (const Pixel& midPoint : midPointPixels) {
+		// Getting X and Y positions in the 2D array.
+		const unsigned int x = midPoint.x;
+		const unsigned int y = midPoint.y;
+
+		Segment currentSegment;
+
+		if (!midPoints[y][x].used) {
+			std::stack<MidPoint> stack;
+			stack.push(midPoints[y][x]);
+			while (!stack.empty()) {
+				const MidPoint& mid = stack.top();
+				stack.pop();
+
+				currentSegment.midPoints.push_back(mid);
+
+				const int currentX = mid.point.x;
+				const int currentY = mid.point.y;
+				midPoints[currentY][currentX].used = true;
+
+				// Left lower.
+				if (currentX - 1 >= 0 && currentY - 1 >= 0 && midPoints[currentY - 1][currentX - 1].valid && !midPoints[currentY - 1][currentX - 1].used) {
+					stack.push(midPoints[currentY - 1][currentX - 1]);
+				}
+				// Lower.
+				if (currentY - 1 >= 0 && midPoints[currentY - 1][currentX].valid && !midPoints[currentY - 1][currentX].used) {
+					stack.push(midPoints[currentY - 1][currentX]);
+				}
+				// Right lower.
+				if (currentX + 1 < maxCoordinate && currentY - 1 >= 0 && midPoints[currentY - 1][currentX + 1].valid && !midPoints[currentY - 1][currentX + 1].used) {
+					stack.push(midPoints[currentY - 1][currentX + 1]);
+				}
+				// Left.
+				if (currentX - 1 >= 0 && midPoints[currentY][currentX - 1].valid && !midPoints[currentY][currentX - 1].used) {
+					stack.push(midPoints[currentY][currentX - 1]);
+				}
+				// Right.
+				if (currentX + 1 < maxCoordinate && midPoints[currentY][currentX + 1].valid && !midPoints[currentY][currentX + 1].used) {
+					stack.push(midPoints[currentY][currentX + 1]);
+				}
+				// Left upper.
+				if (currentX - 1 >= 0 && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX - 1].valid && !midPoints[currentY + 1][currentX - 1].used) {
+					stack.push(midPoints[currentY + 1][currentX - 1]);
+				}
+				// Upper.
+				if (currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX].valid && !midPoints[currentY + 1][currentX].used) {
+					stack.push(midPoints[currentY + 1][currentX]);
+				}
+				// Right upper.
+				if (currentX + 1 < maxCoordinate && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX + 1].valid && !midPoints[currentY + 1][currentX + 1].used) {
+					stack.push(midPoints[currentY + 1][currentX + 1]);
+				}
+			}
+
+			if (currentSegment.midPoints.size() > 20) {
+				segments.push_back(currentSegment);
 			}
 		}
 	}

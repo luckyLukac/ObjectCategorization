@@ -12,14 +12,22 @@ const double MAGNIFY_FACTOR = 1.5;
 
 
 // STRUCTURES
+struct MidPoint {
+	Pixel point;
+	Pixel leftOffset;
+	Pixel rightOffset;
+	bool valid;
+	bool used;
+
+	MidPoint() : valid(false), used(false) {}
+	MidPoint(const Pixel& point, const Pixel& leftOffset, const Pixel& rightOffset, const bool valid, const bool used) : point(point), leftOffset(leftOffset), rightOffset(rightOffset), valid(valid), used(used) {}
+};
+
 // Segment struct.
 struct Segment {
+	std::vector<MidPoint> midPoints;    // The obtained polyline.
 	double angle;						// Sweep-line angle.
 	double averageAngle;				// Average angle of the obtained polyline.
-	std::vector<Pixel> middlePolyline;  // The obtained polyline.
-	std::vector<Pixel> offset1;		    //
-	std::vector<Pixel> offset2;			//
-	bool isValid;						// Validity flag.
 };
 
 
@@ -48,9 +56,10 @@ private:
 	int maxCoordinate = 0;				 // Maximum coordinate.
 	double plotRatio = 1.0;			     // Ratio factor for drawing.
 
-	double angleOfRotation = 0.0;		 // Sweep line angle of rotation [0°-180°].
-	std::vector<Pixel> midPoints;		 // Middle points found while sweeping.
-	std::vector<Segment> segments;		 // Vector of segments.
+	double angleOfRotation = 0.0;			       // Sweep line angle of rotation [0°-180°].
+	std::vector<std::vector<MidPoint>> midPoints;  // Middle points found while sweeping.
+	std::vector<Pixel> midPointPixels;			   // List of midpoints.
+	std::vector<Segment> segments;		           // Vector of segments.
 
 	// PRIVATE HELPER METHODS
 	void calculateCoordinatesFromChainCode();																											  // Transforming chain code to coordinates.
@@ -64,6 +73,7 @@ public:
 	void plotInput(wxDC& dc) const;													   // Plotting the F4 chain code as an image.
 	void plotBoundingBox(wxDC& dc) const;											   // Plotting the object bounding box.
 	void plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasterizedLine) const;  // Plotting the Bresenham line.
+	void plotSegments(wxDC& dc) const;												   // Plotting the segments.
 
 	// GETTERS AND SETTERS
 	void setDrawPanel(wxWindow* drawWindow);        		  // Setting draw panel.
@@ -75,4 +85,5 @@ public:
 	bool readFile(std::string file);					      // Reading a file.
 	void fillShape();										  // Filling the loaded shape.
 	void sweep();											  // Sweeping the object.
+	void extractSegments();									  // Extracting segments from the swept object.
 };
