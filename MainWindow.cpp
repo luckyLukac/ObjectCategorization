@@ -73,11 +73,11 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.fillShape();						  // Filling the object.
 	
 	// Sweeping the object.
-	//for (int i = 0; i <= 180; i += 15) {
-		sweep.setAngleOfRotation(toRadians(0));   // Setting the angle of rotation for the sweep line.
+	for (int i = 0; i <= 180; i += 15) {
+		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		sweep.sweep();						      // Sweeping the object with the sweep line.
 		sweep.extractSegments();				  // Extraction of segments from the object.
-	//}
+	}
 
 	auto end = std::chrono::steady_clock::now();
 
