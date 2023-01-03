@@ -117,6 +117,8 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 			return Pixel(x, 0);
 		}
 	}
+
+	return Pixel();
 }
 
 // Bresenham rasterization algorithm.
@@ -178,4 +180,21 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint) {
 	}
 
 	return pixels;
+}
+
+// Rotation of a point around the reference point for a certain angle.
+Pixel rotate2D(const Pixel& point, const Pixel& referencePoint, const double angle) {
+	// Translating the point to reference point local coordinate system.
+	const int x = point.x - referencePoint.x;
+	const int y = point.y - referencePoint.y;
+
+	// Rotating the point.
+	const double rotatedX = x * std::cos(angle) - y * std::sin(angle);
+	const double rotatedY = x * std::sin(angle) + y * std::cos(angle);
+
+	// Translating the point back to the global coordinate system.
+	const int newX = std::round(rotatedX + referencePoint.x);
+	const int newY = std::round(rotatedY + referencePoint.y);
+
+	return Pixel(newX, newY, point.position);
 }

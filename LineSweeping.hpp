@@ -14,45 +14,46 @@ const double MAGNIFY_FACTOR = 1.5;
 // STRUCTURES
 struct MidPoint {
 	Pixel point;
-	Pixel leftOffset;
-	Pixel rightOffset;
+	//Pixel leftOffset;
+	//Pixel rightOffset;
+	double angle;
 	bool valid;
 	bool used;
 
-	MidPoint() : valid(false), used(false) {}
-	MidPoint(const Pixel& point, const Pixel& leftOffset, const Pixel& rightOffset, const bool valid, const bool used) : point(point), leftOffset(leftOffset), rightOffset(rightOffset), valid(valid), used(used) {}
+	MidPoint() : angle(0.0), valid(false), used(false) {}
+	MidPoint(const Pixel& point, /*const Pixel& leftOffset, const Pixel& rightOffset,*/ const double angle, const bool valid, const bool used) : point(point), /*leftOffset(leftOffset), rightOffset(rightOffset),*/ angle(angle), valid(valid), used(used) {}
 };
 
 // Segment struct.
 struct Segment {
 	std::vector<MidPoint> midPoints;    // The obtained polyline.
-	double angle;						// Sweep-line angle.
-	double averageAngle;				// Average angle of the obtained polyline.
+	double angle = 0.0;					// Sweep-line angle.
 };
 
+// Object bounding box structure.
+struct BoundingBox {
+	int deltaX;
+	int deltaY;
 
-// Position enum class.
-enum class Position {
-	edge,
-	outside,
-	inside,
-	undefined
+	BoundingBox() : deltaX(0), deltaY(0) {}
+	BoundingBox(const int deltaX, const int deltaY) : deltaX(deltaX), deltaY(deltaY) {}
 };
 
 
 // ALIASES
-using PixelField = std::vector<std::vector<Position>>;
+using PixelField = std::vector<std::vector<Pixel>>;
 
 
 // MAIN CLASS
 // Line sweeping class.
 class LineSweeping {
-private:
+public:
 	// PRIVATE VARIABLES
 	wxWindow* drawWindow = nullptr;		 // Draw window.
 	std::vector<ChainCode> chainCodes;   // F4 chain code.
+	BoundingBox boundingBox;			 // Bounding box of the object.
 	std::vector<Pixel> coordinates;      // Point coordinates.
-	PixelField pixelField;				 // Pixel field with pixel positions according to the object (edge, outside or inside).
+	PixelField pixelField;				 // Pixel field with pixels and their positions according to the object (edge, outside or inside).
 	int maxCoordinate = 0;				 // Maximum coordinate.
 	double plotRatio = 1.0;			     // Ratio factor for drawing.
 
@@ -84,6 +85,8 @@ public:
 	// PUBLIC METHODS
 	bool readFile(std::string file);					      // Reading a file.
 	void fillShape();										  // Filling the loaded shape.
+	void rotateObject(const double angle);					  // Rotation of the object for a certain angle.
 	void sweep();											  // Sweeping the object.
 	void extractSegments();									  // Extracting segments from the swept object.
+	std::vector<double> calculateFeatureVector() const;		  // Calculation of a feature vector.
 };

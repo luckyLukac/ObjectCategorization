@@ -71,7 +71,8 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 
 	sweep.clearSegments();				      // Clearing potential previously calculated segments.
 	sweep.fillShape();						  // Filling the object.
-	
+	sweep.rotateObject(toRadians(45));		  // Rotation of the object.
+
 	// Sweeping the object.
 	for (int i = 0; i <= 180; i += 15) {
 		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
@@ -79,13 +80,16 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 		sweep.extractSegments();				  // Extraction of segments from the object.
 	}
 
+	std::vector<double> featureVector = sweep.calculateFeatureVector();  // Calculation of a feature vector for the current object.
+
 	auto end = std::chrono::steady_clock::now();
 
 	image->setSegmentFlag();
 	image->Refresh();
 
 	long long time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+	const double successRate = 100.0 * (featureVector[1]) / (452);
 	std::stringstream ss;
-	ss << "Time: " << time << " ms";
+	ss << "Feature vector: [" << featureVector[0] << ", " << featureVector[1] << ", " << featureVector[2] << "]\n" << "Success: " << successRate << " % \n" << "Time: " << time << " ms";
 	wxMessageBox(ss.str(), "", wxOK);
 }

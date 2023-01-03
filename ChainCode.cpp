@@ -12,6 +12,7 @@ ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const P
 	for (const char& ch : chainCode) {
 		// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
 		if (ch == '0' || ch == '1' || ch == '2' || ch == '3') {
+			//code.push_back(((ch - '0') + 3) % 4);
 			code.push_back(ch - '0');
 		}
 	}
