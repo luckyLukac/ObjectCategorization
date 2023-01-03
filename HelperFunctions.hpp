@@ -14,3 +14,6 @@ bool isInTolerance(const double value, const double desiredValue, const double t
 // BRESENHAM
 Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int maxCoordinate);      // Getting start and end coordinates for Bresenham algorithm.
 std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint);						 // Bresenham rasterization algorithm.
+
+// ROTATION FUNCTIONS
+Pixel rotate2D(const Pixel& point, const Pixel& referencePoint, const double angle);				 // Rotation of a point around the reference point for a certain angle.

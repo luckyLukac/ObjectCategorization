@@ -23,6 +23,7 @@ namespace GUI {
 		void onSize(wxSizeEvent& event);        // Event for refreshing the panel on size.
 
 		void setF4Flag();					    // Setting the F4 flag.
+		void setSegmentFlag();				    // Setting the segment flag.
 		void clearAllFlags();				    // Clearing all flags.
 
 		void setSweepPointer(LineSweeping* s);  // Setting the sweeping pointer.
