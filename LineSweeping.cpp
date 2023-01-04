@@ -203,25 +203,26 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine) {
 	// Plotting the rasterized line.
 	wxClientDC dc(drawWindow);
-	//plotBresenhamLine(dc, rasterizedLine);
+	plotBresenhamLine(dc, rasterizedLine);
 
 	// Finding the edge pixels that lie on the current rasterized line.
 	std::vector<Pixel> edgePixel = findEdgePixels(rasterizedLine);
 
 	// Finding the middle points between the edge pixels.
 	for (unsigned int i = 1; i < edgePixel.size(); i++) {
+		if (isInTolerance(edgePixel[i - 1].x, edgePixel[i].x, 1.0) || isInTolerance(edgePixel[i - 1].y, edgePixel[i].y, 1.0)) {
+			continue;
+		}
+
 		// Calculating middle X and Y coordinates.
-		const int x = static_cast<int>((edgePixel[i - 1].x + edgePixel[i].x) / 2);
-		const int y = static_cast<int>((edgePixel[i - 1].y + edgePixel[i].y) / 2);
+		const int x = static_cast<int>(((edgePixel[i - 1].x + edgePixel[i].x) / 2.0));
+		const int y = static_cast<int>(((edgePixel[i - 1].y + edgePixel[i].y) / 2.0));
 
 		// If the center point lies inside of the object, a red rectangle is drawn there.
 		if (pixelField[y][x].position == Position::inside) {
-			if (x > 0 && y > 0) {
-				midPoints[y][x] = MidPoint(Pixel(x, y),/* Pixel(edgePixel[i - 1]), Pixel(edgePixel[i]),*/ angleOfRotation, true, false);
-				midPointPixels.push_back(Pixel(x, y));
-				fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
-			}
-
+			midPoints[y][x] = MidPoint(Pixel(x, y), angleOfRotation, true, false);
+			midPointPixels.push_back(Pixel(x, y));
+			fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
 		}
 	}
 }
@@ -262,7 +263,7 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 
 // Plotting the segments.
 void LineSweeping::plotSegments(wxDC& dc) const {
-	for (const Segment& segment : segments) {
+	for (const Chain& segment : chains) {
 		for (const MidPoint& midPoint : segment.midPoints) {
 			fillRectangle(dc, midPoint.point.x, -midPoint.point.y + maxCoordinate, 2, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
 		}
@@ -284,7 +285,7 @@ bool LineSweeping::isChainCodeSet() const {
 
 // Clearing previous segments.
 void LineSweeping::clearSegments() {
-	segments.clear();
+	chains.clear();
 }
 
 // Setting the angle of rotation (given in radians).
@@ -588,6 +589,10 @@ void LineSweeping::sweep() {
 	else {
 		if (toDegrees(angleOfRotation) < 90.0) {
 			for (int y = 0; y < maxCoordinate; y++) {
+				if (y == 198) {
+					int jadij = 5;
+				}
+
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
@@ -622,14 +627,14 @@ void LineSweeping::sweep() {
 }
 
 // Extracting segments from the swept object.
-void LineSweeping::extractSegments() {
+void LineSweeping::extractChains() {
 	// Iterating through midpoints and extracting segments.
 	for (const Pixel& midPoint : midPointPixels) {
 		// Getting X and Y positions in the 2D array.
 		const unsigned int x = midPoint.x;
 		const unsigned int y = midPoint.y;
 
-		Segment currentSegment;
+		Chain currentSegment;
 
 		if (!midPoints[y][x].used) {
 			std::stack<MidPoint> stack;
@@ -645,6 +650,31 @@ void LineSweeping::extractSegments() {
 				const int currentY = mid.point.y;
 				midPoints[currentY][currentX].used = true;
 
+
+				// Left left lower lower.
+				if (currentX - 2 >= 0 && currentY - 2 >= 0 && midPoints[currentY - 2][currentX - 2].valid && !midPoints[currentY - 2][currentX - 2].used) {
+					stack.push(midPoints[currentY - 2][currentX - 1]);
+				}
+				// Left lower lower.
+				if (currentX - 1 >= 0 && currentY - 2 >= 0 && midPoints[currentY - 2][currentX - 1].valid && !midPoints[currentY - 2][currentX - 1].used) {
+					stack.push(midPoints[currentY - 2][currentX - 1]);
+				}
+				// Lower lower.
+				if (currentY - 2 >= 0 && midPoints[currentY - 2][currentX].valid && !midPoints[currentY - 2][currentX].used) {
+					stack.push(midPoints[currentY - 2][currentX]);
+				}
+				// Right lower lower.
+				if (currentX + 1 < maxCoordinate && currentY - 2 >= 0 && midPoints[currentY - 2][currentX + 1].valid && !midPoints[currentY - 2][currentX + 1].used) {
+					stack.push(midPoints[currentY - 2][currentX + 1]);
+				}
+				// Right right lower lower.
+				if (currentX + 2 < maxCoordinate && currentY - 2 >= 0 && midPoints[currentY - 2][currentX + 2].valid && !midPoints[currentY - 2][currentX + 2].used) {
+					stack.push(midPoints[currentY - 2][currentX + 1]);
+				}
+				// Left left lower.
+				if (currentX - 2 >= 0 && currentY - 1 >= 0 && midPoints[currentY - 1][currentX - 2].valid && !midPoints[currentY - 1][currentX - 2].used) {
+					stack.push(midPoints[currentY - 1][currentX - 2]);
+				}
 				// Left lower.
 				if (currentX - 1 >= 0 && currentY - 1 >= 0 && midPoints[currentY - 1][currentX - 1].valid && !midPoints[currentY - 1][currentX - 1].used) {
 					stack.push(midPoints[currentY - 1][currentX - 1]);
@@ -657,6 +687,14 @@ void LineSweeping::extractSegments() {
 				if (currentX + 1 < maxCoordinate && currentY - 1 >= 0 && midPoints[currentY - 1][currentX + 1].valid && !midPoints[currentY - 1][currentX + 1].used) {
 					stack.push(midPoints[currentY - 1][currentX + 1]);
 				}
+				// Right right lower.
+				if (currentX + 2 < maxCoordinate && currentY - 1 >= 0 && midPoints[currentY - 1][currentX + 2].valid && !midPoints[currentY - 1][currentX + 2].used) {
+					stack.push(midPoints[currentY - 1][currentX + 1]);
+				}
+				// Left left.
+				if (currentX - 2 >= 0 && midPoints[currentY][currentX - 2].valid && !midPoints[currentY][currentX - 2].used) {
+					stack.push(midPoints[currentY][currentX - 2]);
+				}
 				// Left.
 				if (currentX - 1 >= 0 && midPoints[currentY][currentX - 1].valid && !midPoints[currentY][currentX - 1].used) {
 					stack.push(midPoints[currentY][currentX - 1]);
@@ -664,6 +702,14 @@ void LineSweeping::extractSegments() {
 				// Right.
 				if (currentX + 1 < maxCoordinate && midPoints[currentY][currentX + 1].valid && !midPoints[currentY][currentX + 1].used) {
 					stack.push(midPoints[currentY][currentX + 1]);
+				}
+				// Right right.
+				if (currentX + 2 < maxCoordinate && midPoints[currentY][currentX + 2].valid && !midPoints[currentY][currentX + 2].used) {
+					stack.push(midPoints[currentY][currentX + 2]);
+				}
+				// Left left upper.
+				if (currentX - 2 >= 0 && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX - 2].valid && !midPoints[currentY + 1][currentX - 2].used) {
+					stack.push(midPoints[currentY + 1][currentX - 2]);
 				}
 				// Left upper.
 				if (currentX - 1 >= 0 && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX - 1].valid && !midPoints[currentY + 1][currentX - 1].used) {
@@ -677,34 +723,51 @@ void LineSweeping::extractSegments() {
 				if (currentX + 1 < maxCoordinate && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX + 1].valid && !midPoints[currentY + 1][currentX + 1].used) {
 					stack.push(midPoints[currentY + 1][currentX + 1]);
 				}
+				// Right right upper.
+				if (currentX + 2 < maxCoordinate && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX + 2].valid && !midPoints[currentY + 1][currentX + 2].used) {
+					stack.push(midPoints[currentY + 1][currentX + 2]);
+				}
+				// Left left upper upper.
+				if (currentX - 2 >= 0 && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX - 2].valid && !midPoints[currentY + 2][currentX - 2].used) {
+					stack.push(midPoints[currentY + 2][currentX - 2]);
+				}
+				// Left upper upper.
+				if (currentX - 1 >= 0 && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX - 1].valid && !midPoints[currentY + 2][currentX - 1].used) {
+					stack.push(midPoints[currentY + 2][currentX - 1]);
+				}
+				// Upper upper.
+				if (currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX].valid && !midPoints[currentY + 2][currentX].used) {
+					stack.push(midPoints[currentY + 2][currentX]);
+				}
+				// Right upper upper.
+				if (currentX + 1 < maxCoordinate && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX + 1].valid && !midPoints[currentY + 2][currentX + 1].used) {
+					stack.push(midPoints[currentY + 2][currentX + 1]);
+				}
+				// Right right upper upper.
+				if (currentX + 2 < maxCoordinate && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX + 2].valid && !midPoints[currentY + 2][currentX + 2].used) {
+					stack.push(midPoints[currentY + 2][currentX + 2]);
+				}
 			}
 
-			if (currentSegment.midPoints.size() > static_cast<int>(0.05 * maxCoordinate)) {
-				try
-				{
-					segments.push_back(currentSegment);
-				}
-				catch (const std::exception& e)
-				{
-					wxMessageBox(e.what());
-				}
+			if (currentSegment.midPoints.size() > static_cast<int>(0.03 * maxCoordinate)) {
+				chains.push_back(currentSegment);
 			}
 		}
 	}
 }
 
 // Calculation of a feature vector.
-std::vector<double> LineSweeping::calculateFeatureVector() const {
-	std::vector<double> featureVector(3, 0.0);  // Feature vector of the object.
+std::vector<Chain> LineSweeping::calculateFeatureVector() const {
+	std::vector<Chain> featureVector(chains);  // Feature vector of the object.
 
-	// Calculation of the pixel count.
-	int pixelCount = 0;
-	for (const Segment& segment : segments) {
-		pixelCount += segment.midPoints.size();
-	}
-
-	featureVector[0] = segments.size();  // The first feature is the number of obtained segments.
-	featureVector[1] = static_cast<double>(maxCoordinate * maxCoordinate) / static_cast<double>(pixelCount);		 // The second feature is the number of pixels in obtained segments.
+	// Sorting the feature vector according to the chain lengths.
+	std::sort(
+		featureVector.begin(),
+		featureVector.end(),
+		[](const Chain& s1, const Chain& s2) {
+			return s1.midPoints.size() > s2.midPoints.size();
+		}
+	);
 
 	return featureVector;
 }

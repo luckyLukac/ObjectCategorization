@@ -25,7 +25,7 @@ struct MidPoint {
 };
 
 // Segment struct.
-struct Segment {
+struct Chain {
 	std::vector<MidPoint> midPoints;    // The obtained polyline.
 	double angle = 0.0;					// Sweep-line angle.
 };
@@ -60,7 +60,7 @@ public:
 	double angleOfRotation = 0.0;			       // Sweep line angle of rotation [0°-180°].
 	std::vector<std::vector<MidPoint>> midPoints;  // Middle points found while sweeping.
 	std::vector<Pixel> midPointPixels;			   // List of midpoints.
-	std::vector<Segment> segments;		           // Vector of segments.
+	std::vector<Chain> chains;		           // Vector of segments.
 
 	// PRIVATE HELPER METHODS
 	void calculateCoordinatesFromChainCode();																											  // Transforming chain code to coordinates.
@@ -87,6 +87,6 @@ public:
 	void fillShape();										  // Filling the loaded shape.
 	void rotateObject(const double angle);					  // Rotation of the object for a certain angle.
 	void sweep();											  // Sweeping the object.
-	void extractSegments();									  // Extracting segments from the swept object.
-	std::vector<double> calculateFeatureVector() const;		  // Calculation of a feature vector.
+	void extractChains();									  // Extracting segments from the swept object.
+	std::vector<Chain> calculateFeatureVector() const;		  // Calculation of a feature vector.
 };
