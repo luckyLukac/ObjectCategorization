@@ -11,3 +11,9 @@ Pixel::Pixel(const int x, const int y, const Position& position) :
 	y(y),
 	position(position)
 {}
+
+
+
+bool Pixel::operator == (const Pixel& pixel) const {
+	return x == pixel.x && y == pixel.y;
+}

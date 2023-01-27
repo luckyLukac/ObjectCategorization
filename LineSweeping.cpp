@@ -3,10 +3,11 @@
 #include <limits>
 #include <stack>
 
+#include "Chain.hpp"
 #include "ChainCode.hpp"
 #include "HelperFunctions.hpp"
 #include "LineSweeping.hpp"
-#include <wx/msgdlg.h>
+#include "stdafx.h"
 
 
 // PRIVATE HELPER METHODS
@@ -34,17 +35,37 @@ void LineSweeping::calculateCoordinatesFromChainCode() {
 			if (direction == 0) {
 				currentX++;
 			}
-			// 1 means up.
+			// 1 means up and right.
 			else if (direction == 1) {
 				currentY++;
+				currentX++;
 			}
-			// 2 means left.
+			// 2 means up.
 			else if (direction == 2) {
+				currentY++;
+			}
+			// 3 means up and left.
+			else if (direction == 3) {
+				currentY++;
 				currentX--;
 			}
-			// 3 means down.
-			else if (direction == 3) {
+			// 4 means left.
+			else if (direction == 4) {
+				currentX--;
+			}
+			// 5 means down and left.
+			else if (direction == 5) {
 				currentY--;
+				currentX--;
+			}
+			// 6 means down.
+			else if (direction == 6) {
+				currentY--;
+			}
+			// 7 means down and right.
+			else if (direction == 7) {
+				currentY--;
+				currentX++;
 			}
 
 			// Adding a new coordinate to the vector.
@@ -64,10 +85,10 @@ void LineSweeping::calculateBoundingBox() {
 	int yMin = std::numeric_limits<int>::max();
 	int xMax = std::numeric_limits<int>::min();
 	int yMax = std::numeric_limits<int>::min();
-	unsigned int yMaxIndex = 0;
+	uint yMaxIndex = 0;
 
 	// Iterating through each point.
-	for (unsigned int i = 0; i < coordinates.size(); i++) {
+	for (uint i = 0; i < coordinates.size(); i++) {
 		// If a point X coordinate is smaller than the global
 		// minimum, a new global minimum is set.
 		if (coordinates[i].x < xMin) {
@@ -135,13 +156,16 @@ void LineSweeping::calculateBoundingBox() {
 		coordinates.begin(),
 		coordinates.end(),
 		coordinates.begin(),
-		[&magnifiedX, &magnifiedY](Pixel point) {
+		[&magnifiedX, &magnifiedY](const Pixel& point) {
 			return Pixel(point.x + magnifiedX, point.y + magnifiedY);
 		}
 	);
 
 	// Setting the max coordinates.
 	maxCoordinate = magnifiedPivotCoordinate + 1;
+	if (maxCoordinate % 2 == 1) {
+		maxCoordinate++;
+	}
 
 	// Setting draw coordinates.
 	plotRatio = 1000.0 / maxCoordinate;
@@ -150,23 +174,23 @@ void LineSweeping::calculateBoundingBox() {
 	}
 
 	// Creating the pixel field.
-	for (int i = 0; i < maxCoordinate; i++) {
+	for (int y = 0; y < maxCoordinate; y++) {
 		pixelField.push_back(std::vector<Pixel>());
 
-		for (int j = 0; j < maxCoordinate; j++) {
-			pixelField[i].push_back(Pixel(j, i, Position::undefined));
+		for (int x = 0; x < maxCoordinate; x++) {
+			pixelField[y].push_back(Pixel(x, y, Position::undefined));
 		}
 	}
 }
 
 // Filling a rectangle at X and Y coordinates.
-void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush, const double ratio) const {
+void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const int maxCoordinate, const wxPen& pen, const wxBrush& brush, const double ratio) const {
 	// Creating a wxPoint for rendering.
 	wxPoint P[4] = {
-		wxPoint(x * ratio, y * ratio),
-		wxPoint(x * ratio + pixelSize, y * ratio),
-		wxPoint(x * ratio + pixelSize, y * ratio + pixelSize),
-		wxPoint(x * ratio, y * ratio + pixelSize)
+		wxPoint(static_cast<int>(x * ratio), static_cast<int>((maxCoordinate - y) * ratio)),
+		wxPoint(static_cast<int>(x * ratio + pixelSize), static_cast<int>((maxCoordinate - y) * ratio)),
+		wxPoint(static_cast<int>(x * ratio + pixelSize), static_cast<int>((maxCoordinate - y) * ratio + pixelSize)),
+		wxPoint(static_cast<int>(x * ratio), static_cast<int>((maxCoordinate - y) * ratio + pixelSize))
 	};
 
 	// Drawing the point.
@@ -183,15 +207,31 @@ void LineSweeping::fillRectangle(wxDC& dc, const int x, const int y, const int p
 std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& rasterizedLine) const {
 	std::vector<Pixel> pixels;
 
-	for (unsigned int i = 0; i < rasterizedLine.size(); i++) {
+	if (rasterizedLine.size() < 3) {
+		return pixels;
+	}
+
+	for (uint i = 1; i < rasterizedLine.size() - 1; i++) {
+		Pixel previousPixel = rasterizedLine[i - 1];
 		Pixel pixel = rasterizedLine[i];
 
 		// If the pixel is outside of the bounding box, it is not added to the vector.
-		if (pixel.x < 0 || pixel.x >= maxCoordinate || pixel.y < 0 || pixel.y >= maxCoordinate) {
+		if (pixel.x <= 0 || pixel.x >= maxCoordinate - 1 || pixel.y <= 0 || pixel.y >= maxCoordinate - 1) {
 			continue;
 		}
 
-		if (pixelField[pixel.y][pixel.x].position == Position::edge) {
+		if (
+			(pixelField[previousPixel.y][previousPixel.x].position == Position::outside || pixelField[previousPixel.y][previousPixel.x].position == Position::undefined) &&
+			pixelField[pixel.y][pixel.x].position == Position::inside
+		)
+		{
+			pixels.emplace_back(previousPixel);
+		}
+		else if (
+			pixelField[previousPixel.y][previousPixel.x].position == Position::inside &&
+			(pixelField[pixel.y][pixel.x].position == Position::outside || pixelField[pixel.y][pixel.x].position == Position::undefined)
+		)
+		{
 			pixels.emplace_back(pixel);
 		}
 	}
@@ -203,27 +243,37 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine) {
 	// Plotting the rasterized line.
 	wxClientDC dc(drawWindow);
-	plotBresenhamLine(dc, rasterizedLine);
+	//plotBresenhamLine(dc, rasterizedLine);
 
 	// Finding the edge pixels that lie on the current rasterized line.
 	std::vector<Pixel> edgePixel = findEdgePixels(rasterizedLine);
 
-	// Finding the middle points between the edge pixels.
-	for (unsigned int i = 1; i < edgePixel.size(); i++) {
-		if (isInTolerance(edgePixel[i - 1].x, edgePixel[i].x, 1.0) || isInTolerance(edgePixel[i - 1].y, edgePixel[i].y, 1.0)) {
-			continue;
-		}
+	if (edgePixel.empty()) {
+		return;
+	}
 
+	// Finding the middle points between the edge pixels.
+	for (uint i = 0; i < edgePixel.size() - 1; i += 2) {
 		// Calculating middle X and Y coordinates.
-		const int x = static_cast<int>(((edgePixel[i - 1].x + edgePixel[i].x) / 2.0));
-		const int y = static_cast<int>(((edgePixel[i - 1].y + edgePixel[i].y) / 2.0));
+		const int xDouble = static_cast<int>((edgePixel[i].x + edgePixel[i + 1].x) / 2.0);
+		const int yDouble = static_cast<int>((edgePixel[i].y + edgePixel[i + 1].y) / 2.0);
+		const int x = static_cast<int>(xDouble);
+		const int y = static_cast<int>(yDouble);
 
 		// If the center point lies inside of the object, a red rectangle is drawn there.
-		if (pixelField[y][x].position == Position::inside) {
+		if (pixelField[y][x].position == Position::inside && std::find(midPointPixels.begin(), midPointPixels.end(), Pixel(x, y)) == midPointPixels.end()) {
 			midPoints[y][x] = MidPoint(Pixel(x, y), angleOfRotation, true, false);
 			midPointPixels.push_back(Pixel(x, y));
-			fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
+			fillRectangle(dc, x, y, 1, maxCoordinate, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
 		}
+	}
+}
+
+// Checking whether the pixel should belong to the current chain.
+void LineSweeping::chainExtractionPixelCheck(std::queue<MidPoint>& queue, const int x, const int y) {
+	if (x >= 0 && x < maxCoordinate && y >= 0 && y < maxCoordinate && midPoints[y][x].valid && !midPoints[y][x].used) {
+		queue.push(midPoints[y][x]);
+		midPoints[y][x].used = true;
 	}
 }
 
@@ -236,28 +286,26 @@ void LineSweeping::plotInput(wxDC& dc) const {
 	const wxPen pen(*wxGREEN_PEN);
 	const wxBrush brush(*wxGREEN_BRUSH);
 
-	//fillRectangle(dc, coordinates[0].x, maxCoordinate - coordinates[0].y, 5, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
-
 	// Plotting each point as a pixel.
 	for (const Pixel& point : coordinates) {
-		fillRectangle(dc, point.x, maxCoordinate - point.y, 1, pen, brush, plotRatio);
+		fillRectangle(dc, point.x, point.y, 1, maxCoordinate, pen, brush, plotRatio);
 	}
 }
 
 // Plotting the object bounding box.
 void LineSweeping::plotBoundingBox(wxDC& dc) const {
 	// Plotting the four lines of the bounding box.
-	dc.DrawLine(0, 0, maxCoordinate * plotRatio, 0);
-	dc.DrawLine(maxCoordinate * plotRatio, 0, maxCoordinate * plotRatio, maxCoordinate * plotRatio);
-	dc.DrawLine(maxCoordinate * plotRatio, maxCoordinate * plotRatio, 0, maxCoordinate * plotRatio);
-	dc.DrawLine(0, maxCoordinate * plotRatio, 0, 0);
+	dc.DrawLine(0, 0, static_cast<int>(maxCoordinate * plotRatio), 0);
+	dc.DrawLine(static_cast<int>(maxCoordinate * plotRatio), 0, static_cast<int>(maxCoordinate * plotRatio), static_cast<int>(maxCoordinate * plotRatio));
+	dc.DrawLine(static_cast<int>(maxCoordinate * plotRatio), static_cast<int>(maxCoordinate * plotRatio), 0, static_cast<int>(maxCoordinate * plotRatio));
+	dc.DrawLine(0, static_cast<int>(maxCoordinate * plotRatio), 0, 0);
 }
 
 // Plotting the Bresenham line.
 void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasterizedLine) const {
 	// Plotting each pixel of the line.
 	for (const Pixel& pixel : rasterizedLine) {
-		fillRectangle(dc, pixel.x, -pixel.y + maxCoordinate, 1, *wxLIGHT_GREY_PEN, *wxLIGHT_GREY_BRUSH, plotRatio);
+		fillRectangle(dc, pixel.x, pixel.y, 1, maxCoordinate, *wxLIGHT_GREY_PEN, *wxLIGHT_GREY_BRUSH, plotRatio);
 	}
 }
 
@@ -265,7 +313,7 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 void LineSweeping::plotSegments(wxDC& dc) const {
 	for (const Chain& segment : chains) {
 		for (const MidPoint& midPoint : segment.midPoints) {
-			fillRectangle(dc, midPoint.point.x, -midPoint.point.y + maxCoordinate, 2, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
+			fillRectangle(dc, midPoint.point.x, midPoint.point.y, 2, maxCoordinate, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
 		}
 	}
 }
@@ -296,8 +344,8 @@ void LineSweeping::setAngleOfRotation(const double angle) {
 
 
 // PUBLIC METHODS
-// Reading a file.
-bool LineSweeping::readFile(std::string file) {
+// Reading an F4 chain code file.
+bool LineSweeping::readFileF8(std::string file, const uint rotation) {
 	// Opening a file.
 	std::ifstream in(file);
 
@@ -309,6 +357,9 @@ bool LineSweeping::readFile(std::string file) {
 	// Clearing the previous coordinates.
 	chainCodes.clear();
 	coordinates.clear();
+	pixelField.clear();
+	midPointPixels.clear();
+	chains.clear();
 
 	// Reading first line.
 	std::string firstLine;
@@ -342,13 +393,9 @@ bool LineSweeping::readFile(std::string file) {
 
 		// Adding a new chain code.
 		std::getline(in, value);
-		ChainCode chainCode(value, clockwise, Pixel(startX, startY));
+		ChainCode chainCode(value, clockwise, Pixel(startX, startY), rotation);
 		chainCodes.push_back(chainCode);
 	}
-
-	//auto x = chainCodes[3];
-	//chainCodes.clear();
-	//chainCodes.push_back(x);
 
 	// Calculating the coordinates.
 	calculateCoordinatesFromChainCode();
@@ -362,104 +409,104 @@ void LineSweeping::fillShape() {
 	wxClientDC dc(drawWindow);
 
 	// Creating two stacks for filling the shape.
-	std::stack<unsigned int> leftStack;
-	std::stack<unsigned int> rightStack;
+	std::stack<uint> leftStack;
+	std::stack<uint> rightStack;
 	long startCoordinate = 0;
 
 	// Iterating through the chain codes and filling the shape.
 	int j = 0;
 	for (const ChainCode& chainCode : chainCodes) {
-		for (unsigned int i = 0; i < chainCode.code.size(); i++) {
+		for (uint i = 0; i < chainCode.code.size(); i++) {
 			// Getting the chain code element and the X and Y coordinates of the pixel.
 			const short code = chainCode.code[i];
-			const unsigned int x = coordinates[startCoordinate + i].x;
-			const unsigned int y = coordinates[startCoordinate + i].y;
+			const uint x = coordinates[startCoordinate + i].x;
+			const uint y = coordinates[startCoordinate + i].y;
 
 			// If the instruction is to go up, the left stack is pushed to if the right stack is empty.
-			if (code == 1) {
+			if (code == 1 || code == 2 || code == 3) {
 				if (!rightStack.empty()) {
 					// Getting the top element from the right stack.
-					const unsigned int right = rightStack.top();
+					const uint right = rightStack.top();
 					rightStack.pop();
 
 					// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
 					if (right > x) {
-						for (unsigned int pixelX = x + 1; pixelX < right; pixelX++) {
+						for (uint pixelX = x + 1; pixelX < right; pixelX++) {
 							if (pixelField[y][pixelX].position == Position::inside) {
 								pixelField[y][pixelX].position = Position::outside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
+								//fillRectangle(dc, pixelX, y, 1, maxCoordinate, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
 							}
 							else if (pixelField[y][pixelX].position != Position::edge) {
 								pixelField[y][pixelX].position = Position::inside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
+								//fillRectangle(dc, pixelX, y, 1, maxCoordinate, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
 							}
 						}
 					}
 					// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
 					else {
-						for (unsigned int pixelX = right + 1; pixelX < x; pixelX++) {
+						for (uint pixelX = right + 1; pixelX < x; pixelX++) {
 							if (pixelField[y][pixelX].position == Position::inside) {
 								pixelField[y][pixelX].position = Position::outside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
+								//fillRectangle(dc, pixelX, y, 1, maxCoordinate, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
 							}
 							else if (pixelField[y][pixelX].position != Position::edge) {
 								pixelField[y][pixelX].position = Position::inside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
+								//fillRectangle(dc, pixelX, y, 1, maxCoordinate, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
 							}
 						}
 					}
 				}
 				else {
 					leftStack.push(x);
-					//fillRectangle(dc, x, maxCoordinate - y, 1, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
+					//fillRectangle(dc, x, y, 1, maxCoordinate, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
 				}
 			}
 			// If the instruction is to go down, the right stack is pushed to if the left stack is empty.
-			else if (code == 3) {
+			else if (code == 5 || code == 6 || code == 7) {
 				if (!leftStack.empty()) {
 					// Getting the top element from the left stack.
-					const unsigned int left = leftStack.top();
+					const uint left = leftStack.top();
 					leftStack.pop();
 
 					// Setting undefined pixels to inside if left and right pixel coordinates are not flipped (left < right).
 					if (left < x) {
-						for (unsigned int pixelX = left + 1; pixelX < x; pixelX++) {
-							if (pixelField[y][pixelX].position == Position::inside) {
-								pixelField[y][pixelX].position = Position::outside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
+						for (uint pixelX = left + 1; pixelX < x; pixelX++) {
+							if (pixelField[y - 1][pixelX].position == Position::inside) {
+								pixelField[y - 1][pixelX].position = Position::outside;
+								//fillRectangle(dc, pixelX, y - 1, 1, maxCoordinate, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
 							}
-							else if (pixelField[y][pixelX].position != Position::edge) {
-								pixelField[y][pixelX].position = Position::inside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
+							else if (pixelField[y - 1][pixelX].position != Position::edge) {
+								pixelField[y - 1][pixelX].position = Position::inside;
+								//fillRectangle(dc, pixelX, y - 1, 1, maxCoordinate, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
 							}
 						}
 					}
 					// Setting pixels to outside if left and right pixel coordinates are flipped (left > right).
 					else {
-						for (unsigned int pixelX = x + 1; pixelX < left; pixelX++) {
-							if (pixelField[y][pixelX].position == Position::inside) {
-								pixelField[y][pixelX].position = Position::outside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
+						for (uint pixelX = x + 1; pixelX < left; pixelX++) {
+							if (pixelField[y - 1][pixelX].position == Position::inside) {
+								pixelField[y - 1][pixelX].position = Position::outside;
+								//fillRectangle(dc, pixelX, y - 1, 1, maxCoordinate, *wxWHITE_PEN, *wxWHITE_BRUSH, plotRatio);
 							}
-							else if (pixelField[y][pixelX].position != Position::edge) {
-								pixelField[y][pixelX].position = Position::inside;
-								//fillRectangle(dc, pixelX, maxCoordinate - y, 1, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
+							else if (pixelField[y - 1][pixelX].position != Position::edge) {
+								pixelField[y - 1][pixelX].position = Position::inside;
+								//fillRectangle(dc, pixelX, y - 1, 1, maxCoordinate, *wxGREEN_PEN, *wxGREEN_BRUSH, plotRatio);
 							}
 						}
 					}
 				}
 				else {
 					rightStack.push(x);
-					//fillRectangle(dc, x, maxCoordinate - y, 1, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
+					//fillRectangle(dc, x, y, 1, maxCoordinate, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
 				}
 			}
 
 			// Setting the current pixel to edge.
-			pixelField[y][x].position = Position::edge;
+			pixelField[y][x].position = Position::outside;
 		}
 
-		leftStack = std::stack<unsigned int>();
-		rightStack = std::stack<unsigned int>();
+		leftStack = std::stack<uint>();
+		rightStack = std::stack<uint>();
 		startCoordinate += chainCode.code.size();
 		j++;
 	}
@@ -540,16 +587,17 @@ void LineSweeping::sweep() {
 	// Creating a Bresenham point vector.
 	std::vector<Pixel> bresenhamPixels(maxCoordinate);
 	midPoints = std::vector<std::vector<MidPoint>>(maxCoordinate, std::vector<MidPoint>(maxCoordinate, MidPoint()));
+	midPointPixels.clear();
 
 	// If the line is horizontal, there is no need for sophisticated rasterization method.
 	if (isInTolerance(angleOfRotation, 0.0)) {
 		// Creating the starting line segment points.
 		for (int i = 0; i < maxCoordinate; i++) {
-			bresenhamPixels[i] = Pixel(i, 0);
+			bresenhamPixels[i] = Pixel(i, 0, pixelField[0][i].position);
 		}
 
 		// Moving the rasterized line segment vertically.
-		for (int i = 0; i < maxCoordinate; i++) {
+		for (int i = 0; i < maxCoordinate - 1; i++) {
 			addCurrentMidpointFromSweepLine(bresenhamPixels);  // Adding midpoints according to the sweep line.
 
 			// Increasing each pixel Y coordinate.
@@ -557,8 +605,8 @@ void LineSweeping::sweep() {
 				bresenhamPixels.begin(),
 				bresenhamPixels.end(),
 				bresenhamPixels.begin(),
-				[](const Pixel& pixel) {
-					return Pixel(pixel.x, pixel.y + 1);
+				[this](const Pixel& pixel) {
+					return Pixel(pixel.x, pixel.y + 1, pixelField[pixel.y + 1][pixel.x].position);
 				}
 			);
 		}
@@ -567,11 +615,11 @@ void LineSweeping::sweep() {
 	else if (isInTolerance(angleOfRotation, toRadians(90))) {
 		// Creating the starting line segment points.
 		for (int i = 0; i < maxCoordinate; i++) {
-			bresenhamPixels[i] = Pixel(0, i);
+			bresenhamPixels[i] = Pixel(0, i, pixelField[i][0].position);
 		}
 
 		// Moving the rasterized line segment vertically.
-		for (int i = 0; i < maxCoordinate; i++) {
+		for (int i = 0; i < maxCoordinate - 1; i++) {
 			addCurrentMidpointFromSweepLine(bresenhamPixels);
 
 			// Increasing each pixel X coordinate.
@@ -579,8 +627,8 @@ void LineSweeping::sweep() {
 				bresenhamPixels.begin(),
 				bresenhamPixels.end(),
 				bresenhamPixels.begin(),
-				[](const Pixel& pixel) {
-					return Pixel(pixel.x + 1, pixel.y);
+				[this](const Pixel& pixel) {
+					return Pixel(pixel.x + 1, pixel.y, pixelField[pixel.y][pixel.x + 1].position);
 				}
 			);
 		}
@@ -588,38 +636,34 @@ void LineSweeping::sweep() {
 	// If the line is neither horizontal nor vertical, we have to reach for Bresenham rasterization algorithm.
 	else {
 		if (toDegrees(angleOfRotation) < 90.0) {
-			for (int y = 0; y < maxCoordinate; y++) {
-				if (y == 198) {
-					int jadij = 5;
-				}
-
+			for (int y = 0; y < maxCoordinate; y += 2) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
-			for (int x = 0; x < maxCoordinate; x++) {
+			for (int x = 0; x < maxCoordinate; x += 2) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint = Pixel(x, maxCoordinate);
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 		}
 		else if (toDegrees(angleOfRotation) < 180.0) {
-			for (int x = 0; x < maxCoordinate; x++) {
+			for (int x = 0; x < maxCoordinate; x += 2) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(x, maxCoordinate));
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
-			for (int y = maxCoordinate; y >= 0; y--) {
+			for (int y = maxCoordinate; y >= 0; y -= 2) {
 				// Bresenham rasterization algorithm.
 				auto startPoint(Pixel(maxCoordinate, y));
 				auto endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 		}
@@ -631,125 +675,35 @@ void LineSweeping::extractChains() {
 	// Iterating through midpoints and extracting segments.
 	for (const Pixel& midPoint : midPointPixels) {
 		// Getting X and Y positions in the 2D array.
-		const unsigned int x = midPoint.x;
-		const unsigned int y = midPoint.y;
+		const uint x = midPoint.x;
+		const uint y = midPoint.y;
 
 		Chain currentSegment;
 
 		if (!midPoints[y][x].used) {
-			std::stack<MidPoint> stack;
-			stack.push(midPoints[y][x]);
-			while (!stack.empty()) {
-				const MidPoint& mid = stack.top();
-				stack.pop();
+			std::queue<MidPoint> queue;
+			queue.push(midPoints[y][x]);
+			while (!queue.empty()) {
+				const MidPoint& mid = queue.front();
+				queue.pop();
 
 				currentSegment.midPoints.push_back(mid);
-				currentSegment.angle = mid.angle;
+				currentSegment.angle = toDegrees(angleOfRotation);
 
 				const int currentX = mid.point.x;
 				const int currentY = mid.point.y;
 				midPoints[currentY][currentX].used = true;
 
-
-				// Left left lower lower.
-				if (currentX - 2 >= 0 && currentY - 2 >= 0 && midPoints[currentY - 2][currentX - 2].valid && !midPoints[currentY - 2][currentX - 2].used) {
-					stack.push(midPoints[currentY - 2][currentX - 1]);
-				}
-				// Left lower lower.
-				if (currentX - 1 >= 0 && currentY - 2 >= 0 && midPoints[currentY - 2][currentX - 1].valid && !midPoints[currentY - 2][currentX - 1].used) {
-					stack.push(midPoints[currentY - 2][currentX - 1]);
-				}
-				// Lower lower.
-				if (currentY - 2 >= 0 && midPoints[currentY - 2][currentX].valid && !midPoints[currentY - 2][currentX].used) {
-					stack.push(midPoints[currentY - 2][currentX]);
-				}
-				// Right lower lower.
-				if (currentX + 1 < maxCoordinate && currentY - 2 >= 0 && midPoints[currentY - 2][currentX + 1].valid && !midPoints[currentY - 2][currentX + 1].used) {
-					stack.push(midPoints[currentY - 2][currentX + 1]);
-				}
-				// Right right lower lower.
-				if (currentX + 2 < maxCoordinate && currentY - 2 >= 0 && midPoints[currentY - 2][currentX + 2].valid && !midPoints[currentY - 2][currentX + 2].used) {
-					stack.push(midPoints[currentY - 2][currentX + 1]);
-				}
-				// Left left lower.
-				if (currentX - 2 >= 0 && currentY - 1 >= 0 && midPoints[currentY - 1][currentX - 2].valid && !midPoints[currentY - 1][currentX - 2].used) {
-					stack.push(midPoints[currentY - 1][currentX - 2]);
-				}
-				// Left lower.
-				if (currentX - 1 >= 0 && currentY - 1 >= 0 && midPoints[currentY - 1][currentX - 1].valid && !midPoints[currentY - 1][currentX - 1].used) {
-					stack.push(midPoints[currentY - 1][currentX - 1]);
-				}
-				// Lower.
-				if (currentY - 1 >= 0 && midPoints[currentY - 1][currentX].valid && !midPoints[currentY - 1][currentX].used) {
-					stack.push(midPoints[currentY - 1][currentX]);
-				}
-				// Right lower.
-				if (currentX + 1 < maxCoordinate && currentY - 1 >= 0 && midPoints[currentY - 1][currentX + 1].valid && !midPoints[currentY - 1][currentX + 1].used) {
-					stack.push(midPoints[currentY - 1][currentX + 1]);
-				}
-				// Right right lower.
-				if (currentX + 2 < maxCoordinate && currentY - 1 >= 0 && midPoints[currentY - 1][currentX + 2].valid && !midPoints[currentY - 1][currentX + 2].used) {
-					stack.push(midPoints[currentY - 1][currentX + 1]);
-				}
-				// Left left.
-				if (currentX - 2 >= 0 && midPoints[currentY][currentX - 2].valid && !midPoints[currentY][currentX - 2].used) {
-					stack.push(midPoints[currentY][currentX - 2]);
-				}
-				// Left.
-				if (currentX - 1 >= 0 && midPoints[currentY][currentX - 1].valid && !midPoints[currentY][currentX - 1].used) {
-					stack.push(midPoints[currentY][currentX - 1]);
-				}
-				// Right.
-				if (currentX + 1 < maxCoordinate && midPoints[currentY][currentX + 1].valid && !midPoints[currentY][currentX + 1].used) {
-					stack.push(midPoints[currentY][currentX + 1]);
-				}
-				// Right right.
-				if (currentX + 2 < maxCoordinate && midPoints[currentY][currentX + 2].valid && !midPoints[currentY][currentX + 2].used) {
-					stack.push(midPoints[currentY][currentX + 2]);
-				}
-				// Left left upper.
-				if (currentX - 2 >= 0 && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX - 2].valid && !midPoints[currentY + 1][currentX - 2].used) {
-					stack.push(midPoints[currentY + 1][currentX - 2]);
-				}
-				// Left upper.
-				if (currentX - 1 >= 0 && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX - 1].valid && !midPoints[currentY + 1][currentX - 1].used) {
-					stack.push(midPoints[currentY + 1][currentX - 1]);
-				}
-				// Upper.
-				if (currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX].valid && !midPoints[currentY + 1][currentX].used) {
-					stack.push(midPoints[currentY + 1][currentX]);
-				}
-				// Right upper.
-				if (currentX + 1 < maxCoordinate && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX + 1].valid && !midPoints[currentY + 1][currentX + 1].used) {
-					stack.push(midPoints[currentY + 1][currentX + 1]);
-				}
-				// Right right upper.
-				if (currentX + 2 < maxCoordinate && currentY + 1 < maxCoordinate && midPoints[currentY + 1][currentX + 2].valid && !midPoints[currentY + 1][currentX + 2].used) {
-					stack.push(midPoints[currentY + 1][currentX + 2]);
-				}
-				// Left left upper upper.
-				if (currentX - 2 >= 0 && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX - 2].valid && !midPoints[currentY + 2][currentX - 2].used) {
-					stack.push(midPoints[currentY + 2][currentX - 2]);
-				}
-				// Left upper upper.
-				if (currentX - 1 >= 0 && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX - 1].valid && !midPoints[currentY + 2][currentX - 1].used) {
-					stack.push(midPoints[currentY + 2][currentX - 1]);
-				}
-				// Upper upper.
-				if (currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX].valid && !midPoints[currentY + 2][currentX].used) {
-					stack.push(midPoints[currentY + 2][currentX]);
-				}
-				// Right upper upper.
-				if (currentX + 1 < maxCoordinate && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX + 1].valid && !midPoints[currentY + 2][currentX + 1].used) {
-					stack.push(midPoints[currentY + 2][currentX + 1]);
-				}
-				// Right right upper upper.
-				if (currentX + 2 < maxCoordinate && currentY + 2 < maxCoordinate && midPoints[currentY + 2][currentX + 2].valid && !midPoints[currentY + 2][currentX + 2].used) {
-					stack.push(midPoints[currentY + 2][currentX + 2]);
+				// Exctraction of vicinity pixels.
+				const int vicinity = 6;
+				for (int checkY = -vicinity; checkY <= vicinity; checkY++) {
+					for (int checkX = -vicinity; checkX <= vicinity; checkX++) {
+						chainExtractionPixelCheck(queue, currentX + checkX, currentY + checkY);
+					}
 				}
 			}
 
-			if (currentSegment.midPoints.size() > static_cast<int>(0.03 * maxCoordinate)) {
+			if (currentSegment.midPoints.size() > static_cast<uint>(0.03 * maxCoordinate)) {
 				chains.push_back(currentSegment);
 			}
 		}
@@ -757,17 +711,33 @@ void LineSweeping::extractChains() {
 }
 
 // Calculation of a feature vector.
-std::vector<Chain> LineSweeping::calculateFeatureVector() const {
-	std::vector<Chain> featureVector(chains);  // Feature vector of the object.
+FeatureVector LineSweeping::calculateFeatureVector() const {
+	std::vector<Chain> chainVector(chains);  // Feature vector of the object.
 
 	// Sorting the feature vector according to the chain lengths.
 	std::sort(
-		featureVector.begin(),
-		featureVector.end(),
+		chainVector.begin(),
+		chainVector.end(),
 		[](const Chain& s1, const Chain& s2) {
 			return s1.midPoints.size() > s2.midPoints.size();
 		}
 	);
 
+	// Creating a feature vector.
+	FeatureVector featureVector(chainVector);
+
 	return featureVector;
+}
+
+// Calculation of the object score.
+double LineSweeping::calculateScore(const std::vector<Chain>& chains) const {
+	double score = 0.0;
+
+	const uint chainCount = static_cast<uint>(0.5 * chains.size());  // Number of chains for the calculation.
+	for (uint i = 0; i < chainCount; i++) {
+		score += chains[i].midPoints.size();
+	}
+	score /= maxCoordinate;
+
+	return score;
 }

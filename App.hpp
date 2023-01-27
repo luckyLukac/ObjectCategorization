@@ -2,7 +2,15 @@
 
 #include "stdafx.h"
 
+
+/// <summary>
+/// Class for the WX application.
+/// </summary>
 class App : public wxApp {
 public:
-	virtual bool OnInit();  // Initialization method for the app.
+	/// <summary>
+	/// Initialization method for the app.
+	/// </summary>
+	/// <returns></returns>
+	virtual bool OnInit();
 };

@@ -18,4 +18,6 @@ struct Pixel {
 
 	Pixel();
 	Pixel(const int x, const int y, const Position& position = Position::undefined);
+
+	bool operator == (const Pixel& pixel) const;
 };

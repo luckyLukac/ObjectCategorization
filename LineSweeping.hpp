@@ -1,47 +1,16 @@
 #pragma once
 
+#include <queue>
 #include <vector>
-#include <wx/dcbuffer.h>
 
 #include "ChainCode.hpp"
+#include "FeatureVector.hpp"
 #include "Pixel.hpp"
+#include "stdafx.h"
 
 
 // CONSTANTS
 const double MAGNIFY_FACTOR = 1.5;
-
-
-// STRUCTURES
-struct MidPoint {
-	Pixel point;
-	//Pixel leftOffset;
-	//Pixel rightOffset;
-	double angle;
-	bool valid;
-	bool used;
-
-	MidPoint() : angle(0.0), valid(false), used(false) {}
-	MidPoint(const Pixel& point, /*const Pixel& leftOffset, const Pixel& rightOffset,*/ const double angle, const bool valid, const bool used) : point(point), /*leftOffset(leftOffset), rightOffset(rightOffset),*/ angle(angle), valid(valid), used(used) {}
-};
-
-// Segment struct.
-struct Chain {
-	std::vector<MidPoint> midPoints;    // The obtained polyline.
-	double angle = 0.0;					// Sweep-line angle.
-};
-
-// Object bounding box structure.
-struct BoundingBox {
-	int deltaX;
-	int deltaY;
-
-	BoundingBox() : deltaX(0), deltaY(0) {}
-	BoundingBox(const int deltaX, const int deltaY) : deltaX(deltaX), deltaY(deltaY) {}
-};
-
-
-// ALIASES
-using PixelField = std::vector<std::vector<Pixel>>;
 
 
 // MAIN CLASS
@@ -60,14 +29,16 @@ public:
 	double angleOfRotation = 0.0;			       // Sweep line angle of rotation [0°-180°].
 	std::vector<std::vector<MidPoint>> midPoints;  // Middle points found while sweeping.
 	std::vector<Pixel> midPointPixels;			   // List of midpoints.
-	std::vector<Chain> chains;		           // Vector of segments.
+	std::vector<Chain> chains;		               // Vector of segments.
 
 	// PRIVATE HELPER METHODS
-	void calculateCoordinatesFromChainCode();																											  // Transforming chain code to coordinates.
-	void calculateBoundingBox();																														  // Calculation of a bounding box according to point coordinates.
-	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const wxPen& pen, const wxBrush& brush, const double ratio = 1.0) const;  // Filling a rectangle at X and Y coordinates.
-	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;																	  // Finding edge pixel pairs.
-	void addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine);																		  // Adding the current midpoint and plotting the Bresenham line.
+	void calculateCoordinatesFromChainCode();																																	   // Transforming chain code to coordinates.
+	void calculateBoundingBox();																																				   // Calculation of a bounding box according to point coordinates.
+	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const int maxCoordinate, const wxPen& pen, const wxBrush& brush, const double ratio = 1.0) const;  // Filling a rectangle at X and Y coordinates.
+	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;																							   // Finding edge pixel pairs.
+	void addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine);																								   // Adding the current midpoint and plotting the Bresenham line.
+	void chainExtractionPixelCheck(std::queue<MidPoint>& queue, const int x, const int y);																						   // Checking whether the pixel should belong to the current chain.
+
 
 public:
 	// PLOT METHODS
@@ -83,10 +54,11 @@ public:
 	void setAngleOfRotation(const double angle);			  // Setting the angle of rotation (given in radians).
 
 	// PUBLIC METHODS
-	bool readFile(std::string file);					      // Reading a file.
-	void fillShape();										  // Filling the loaded shape.
-	void rotateObject(const double angle);					  // Rotation of the object for a certain angle.
-	void sweep();											  // Sweeping the object.
-	void extractChains();									  // Extracting segments from the swept object.
-	std::vector<Chain> calculateFeatureVector() const;		  // Calculation of a feature vector.
+	bool readFileF8(std::string file, const uint rotation = 0);		// Reading an F4 chain code file.
+	void fillShape();												// Filling the loaded shape.
+	void rotateObject(const double angle);							// Rotation of the object for a certain angle.
+	void sweep();													// Sweeping the object.
+	void extractChains();											// Extracting segments from the swept object.
+	FeatureVector calculateFeatureVector() const;				    // Calculation of a feature vector.
+	double calculateScore(const std::vector<Chain>& chains) const;  // Calculation of the object score.
 };
