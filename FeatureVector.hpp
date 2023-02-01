@@ -11,7 +11,7 @@
 /// Structure for storing the feature vector of detected chains.
 /// </summary>
 struct FeatureVector {
-	std::vector<uint> chainLengths;  // Vector of chain lengths.
+	std::vector<double> chainLengths;  // Vector of chain lengths.
 
 
 	/// <summary>

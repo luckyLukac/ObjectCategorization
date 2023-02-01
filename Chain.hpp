@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "LineSegment.hpp"
 #include "Pixel.hpp"
 
 
@@ -34,6 +35,17 @@ using PixelField = std::vector<std::vector<Pixel>>;
 /// Chain structure.
 /// </summary>
 struct Chain {
-	std::vector<MidPoint> midPoints;    // The obtained polyline.
-	double angle = 0.0;					// Sweep-line angle.
+	std::vector<LineSegment> lineSegments;  // The obtained polyline.
+	double angle = 0.0;						// Sweep-line angle.
+
+	// Getting the total length of all line segments.
+	double totalLength() const {
+		double length = 0.0;
+
+		for (const LineSegment& ls : lineSegments) {
+			length += ls.length();
+		}
+
+		return length;
+	}
 };

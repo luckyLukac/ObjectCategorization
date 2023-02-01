@@ -40,6 +40,7 @@ public:
 	void chainExtractionPixelCheck(std::queue<MidPoint>& queue, const int x, const int y);																						   // Checking whether the pixel should belong to the current chain.
 
 
+
 public:
 	// PLOT METHODS
 	void plotInput(wxDC& dc) const;													   // Plotting the F4 chain code as an image.

@@ -36,7 +36,7 @@ bool isInTolerance(const double value, const double desiredValue, const double t
 	return true;
 }
 
-uint difference(const int value1, const int value2) {
+double difference(const double value1, const double value2) {
 	return std::abs(value1 - value2);
 }
 
@@ -200,6 +200,64 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 	return pixels;
 }
 
+std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField, const double angleOfRotation) {
+	std::vector<Pixel> pixels;
+
+	short pX = -1;
+	short pY = -1;
+	if (endPoint.x > startPoint.x) {
+		pX = 1;
+	}
+	if (startPoint.y > startPoint.y) {
+		pY = 1;
+	}
+
+	// Calculation of delta X and delta Y distances.
+	double deltaX = std::abs(1 / std::sin(PI / 2 - angleOfRotation));
+	double deltaY = std::abs(1 / std::cos(PI / 2 - angleOfRotation));
+	//if (angleOfRotation > PI / 2) {
+	//	deltaX = std::tan(PI / 2 - angleOfRotation);
+	//	deltaY = 1 / std::tan(PI / 2 - angleOfRotation);
+	//}
+
+	double dX = deltaX;
+	double dY = deltaY;
+
+	Pixel currentPixel = startPoint;
+	pixels.push_back(Pixel(currentPixel));
+
+	//while (currentPixel.x < endPoint.x || currentPixel.y > endPoint.y) {
+	while (
+		currentPixel != Pixel(endPoint.x - 1, endPoint.y - 1) &&
+		currentPixel != Pixel(endPoint.x, endPoint.y - 1) &&
+		currentPixel != Pixel(endPoint.x + 1, endPoint.y - 1) &&
+		currentPixel != Pixel(endPoint.x - 1, endPoint.y) &&
+		currentPixel != Pixel(endPoint.x, endPoint.y) &&
+		currentPixel != Pixel(endPoint.x + 1, endPoint.y) &&
+		currentPixel != Pixel(endPoint.x - 1, endPoint.y + 1) &&
+		currentPixel != Pixel(endPoint.x, endPoint.y + 1) &&
+		currentPixel != Pixel(endPoint.x + 1, endPoint.y + 1)
+	)
+	{
+		//if (endPoint.x == 522 && endPoint.y == 382 && currentPixel.x == 520) {
+		//	int pop = 5;
+		//}
+
+		if (dX <= dY) {
+			currentPixel.x += pX;
+			dX += deltaX;
+			pixels.push_back(Pixel(currentPixel));
+		}
+		else {
+			currentPixel.y += pY;
+			dY += deltaY;
+			pixels.push_back(Pixel(currentPixel));
+		}
+	}
+	
+	return pixels;
+}
+
 Pixel rotate2D(const Pixel& point, const Pixel& referencePoint, const double angle) {
 	// Translating the point to reference point local coordinate system.
 	const int x = point.x - referencePoint.x;
@@ -221,17 +279,18 @@ std::vector<LineSegment> douglasPeucker(const std::vector<Pixel>& pixels, const 
 
 	const auto [index, distance] = farthestPoint(pixels, lineSegment);  // Detection of the farthest pixel.
 
-	if (distance > epsilon) {
-		std::vector<LineSegment> result1 = douglasPeucker(std::vector<Pixel>(pixels.begin() + 1, pixels.begin() + index), LineSegment(lineSegment.p1, pixels[index]), epsilon);
-		std::vector<LineSegment> result2 = douglasPeucker(std::vector<Pixel>(pixels.begin() + index, pixels.end() - 1), LineSegment(pixels[index], lineSegment.p2), epsilon);
+	if (distance > epsilon && index != 0) {
+		std::vector<LineSegment> result1 = douglasPeucker(std::vector<Pixel>(pixels.begin(), pixels.begin() + index), LineSegment(lineSegment.p1, pixels[index]), epsilon);
+		std::vector<LineSegment> result2 = douglasPeucker(std::vector<Pixel>(pixels.begin() + index, pixels.end()), LineSegment(pixels[index], lineSegment.p2), epsilon);
 
 		lineSegments.insert(lineSegments.end(), result1.begin(), result1.end());
 		lineSegments.insert(lineSegments.end(), result2.begin(), result2.end());
 	}
 	else {
-		for (uint i = 1; i < pixels.size(); i++) {
-			lineSegments.push_back(LineSegment(pixels[i - 1], pixels[i]));
-		}
+		lineSegments.push_back(lineSegment);
+		//for (uint i = 1; i < pixels.size(); i++) {
+			//lineSegments.push_back(LineSegment(pixels[i - 1], pixels[i]));
+		//}
 	}
 
 	return lineSegments;
@@ -244,7 +303,7 @@ std::tuple<uint, double> farthestPoint(const std::vector<Pixel>& pixels, const L
 	uint maxIndex = 0;
 	double maxDistance = 0.0;
 	
-	for (int i = 0; i < pixels.size(); i++)	{
+	for (uint i = 0; i < pixels.size(); i++) {
 		const double currentDistance = (
 			std::abs((p2.x - p1.x) * (p1.y - pixels[i].y) - (p1.x - pixels[i].x) * (p2.y - p1.y)) /
 			std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2))

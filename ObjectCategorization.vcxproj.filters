@@ -48,6 +48,9 @@
     <ClInclude Include="Chain.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LineSegment.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MainWindow.cpp">

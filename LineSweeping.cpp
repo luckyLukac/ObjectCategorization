@@ -236,6 +236,20 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 		}
 	}
 
+	if (pixels.size() == 6) {
+		int d = 0;
+	}
+
+	if (pixels.size() > 1) {
+		for (uint i = 0; i < pixels.size() - 1; i += 2) {
+			const double d = distance(pixels[i], pixels[i + 1]);
+			if (d < 2.5) {
+				pixels.erase(pixels.begin() + i, pixels.begin() + i + 1);
+				i -= 2;
+			}
+		}
+	}
+
 	return pixels;
 }
 
@@ -312,8 +326,8 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 // Plotting the segments.
 void LineSweeping::plotSegments(wxDC& dc) const {
 	for (const Chain& segment : chains) {
-		for (const MidPoint& midPoint : segment.midPoints) {
-			fillRectangle(dc, midPoint.point.x, midPoint.point.y, 2, maxCoordinate, *wxBLUE_PEN, *wxBLUE_BRUSH, plotRatio);
+		for (const LineSegment& ls : segment.lineSegments) {
+			dc.DrawLine(ls.p1.x, maxCoordinate - ls.p1.y, ls.p2.x, maxCoordinate - ls.p2.y);
 		}
 	}
 }
@@ -640,14 +654,16 @@ void LineSweeping::sweep() {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, angleOfRotation);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 			for (int x = 0; x < maxCoordinate; x += 2) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint = Pixel(x, maxCoordinate);
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, PI - angleOfRotation);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 		}
@@ -656,14 +672,16 @@ void LineSweeping::sweep() {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(x, maxCoordinate));
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, angleOfRotation);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 			for (int y = maxCoordinate; y >= 0; y -= 2) {
 				// Bresenham rasterization algorithm.
 				auto startPoint(Pixel(maxCoordinate, y));
 				auto endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
-				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, angleOfRotation);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
 		}
@@ -678,7 +696,7 @@ void LineSweeping::extractChains() {
 		const uint x = midPoint.x;
 		const uint y = midPoint.y;
 
-		Chain currentSegment;
+		std::vector<Pixel> currentMidPoints;
 
 		if (!midPoints[y][x].used) {
 			std::queue<MidPoint> queue;
@@ -687,15 +705,14 @@ void LineSweeping::extractChains() {
 				const MidPoint& mid = queue.front();
 				queue.pop();
 
-				currentSegment.midPoints.push_back(mid);
-				currentSegment.angle = toDegrees(angleOfRotation);
+				currentMidPoints.push_back(Pixel(mid.point.x, mid.point.y));
 
 				const int currentX = mid.point.x;
 				const int currentY = mid.point.y;
 				midPoints[currentY][currentX].used = true;
 
 				// Exctraction of vicinity pixels.
-				const int vicinity = 6;
+				const int vicinity = 3;
 				for (int checkY = -vicinity; checkY <= vicinity; checkY++) {
 					for (int checkX = -vicinity; checkX <= vicinity; checkX++) {
 						chainExtractionPixelCheck(queue, currentX + checkX, currentY + checkY);
@@ -703,7 +720,13 @@ void LineSweeping::extractChains() {
 				}
 			}
 
-			if (currentSegment.midPoints.size() > static_cast<uint>(0.03 * maxCoordinate)) {
+			Chain currentSegment;
+			currentSegment.lineSegments = douglasPeucker(currentMidPoints, LineSegment(*currentMidPoints.begin(), currentMidPoints.back()), 5.0);
+			const double ddd = currentSegment.totalLength();
+
+			if (ddd > 1 /*0.05 * maxCoordinate*/) {
+				currentSegment.angle = toDegrees(angleOfRotation);
+
 				chains.push_back(currentSegment);
 			}
 		}
@@ -719,12 +742,31 @@ FeatureVector LineSweeping::calculateFeatureVector() const {
 		chainVector.begin(),
 		chainVector.end(),
 		[](const Chain& s1, const Chain& s2) {
-			return s1.midPoints.size() > s2.midPoints.size();
+			return s1.lineSegments.size() > s2.lineSegments.size();
 		}
 	);
 
 	// Creating a feature vector.
 	FeatureVector featureVector(chainVector);
+
+	// Sorting the feature vector according to the chain lengths.
+	std::sort(
+		featureVector.chainLengths.begin(),
+		featureVector.chainLengths.end(),
+		[](const double s1, const double s2) {
+			return s1 > s2;
+		}
+	);
+
+	const double maxLen = featureVector.chainLengths[0];
+	std::transform(
+		featureVector.chainLengths.begin(),
+		featureVector.chainLengths.end(),
+		featureVector.chainLengths.begin(),
+		[&maxLen](double d) {
+			return d / maxLen;
+		}
+	);
 
 	return featureVector;
 }
@@ -735,7 +777,7 @@ double LineSweeping::calculateScore(const std::vector<Chain>& chains) const {
 
 	const uint chainCount = static_cast<uint>(0.5 * chains.size());  // Number of chains for the calculation.
 	for (uint i = 0; i < chainCount; i++) {
-		score += chains[i].midPoints.size();
+		score += chains[i].lineSegments.size();
 	}
 	score /= maxCoordinate;
 

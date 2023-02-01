@@ -5,9 +5,9 @@
 
 
 FeatureVector::FeatureVector(const std::vector<Chain>& chains) {
-	chainLengths = std::vector<uint>(chains.size());
+	chainLengths = std::vector<double>(chains.size());
 	for (uint i = 0; i < chains.size(); i++) {
-		chainLengths[i] = chains[i].midPoints.size();
+		chainLengths[i] = chains[i].totalLength();
 	}
 }
 
@@ -23,7 +23,7 @@ bool FeatureVector::writeToFile(const std::string& fileName, const std::string& 
 	out << chainLengths.size() << "\n";
 
 	// Output of each chain length.
-	for (const uint chainLength : chainLengths) {
+	for (const double chainLength : chainLengths) {
 		out << chainLength << " ";
 	}
 

@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <iterator>
+#include <regex>
 #include <vector>
 
 #include "HelperFunctions.hpp"
@@ -135,14 +136,17 @@ MainWindow::MainWindow() :
 
 void MainWindow::selectChainCode(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	wxFileDialog fd(this, "Open TXT file", "", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\F8 Datasets\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
 		return;
 	}
 
-	const std::string file = fd.GetPath().ToStdString();
+	std::string file = fd.GetPath().ToStdString();
+	const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
+	file.replace(file.find(replacement), replacement.size(), ".");
+
 	tbxChainCodeLoading->SetValue(file);
 }
 
@@ -173,7 +177,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.fillShape();						  // Filling the object.
 
 	// Sweeping the object.
-	for (int i = 30; i <= 30; i += 15) {
+	for (int i = 90; i <= 90; i += 15) {
 		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		sweep.sweep();						      // Sweeping the object with the sweep line.
 		sweep.extractChains();				      // Extraction of chains from the object.
@@ -186,7 +190,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	featureVector.writeToFile(filename + ".txt", "./Results/");
 
 	image->setSegmentFlag();
-	image->Refresh();
+	image->Refresh(false);
 
 	u128 time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	std::stringstream ss;
@@ -196,27 +200,33 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 
 void MainWindow::selectFirstObjectResult(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	wxFileDialog fd(this, "Open TXT file", "", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
 		return;
 	}
 
-	const std::string file = fd.GetPath().ToStdString();
+	std::string file = fd.GetPath().ToStdString();
+	const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
+	file.replace(file.find(replacement), replacement.size(), ".");
+
 	tbxObjectComparisonFile1->SetValue(file);
 }
 
 void MainWindow::selectSecondObjectResult(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	wxFileDialog fd(this, "Open TXT file", "", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
 		return;
 	}
 
-	const std::string file = fd.GetPath().ToStdString();
+	std::string file = fd.GetPath().ToStdString();
+	const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
+	file.replace(file.find(replacement), replacement.size(), ".");
+
 	tbxObjectComparisonFile2->SetValue(file);
 }
 
@@ -245,17 +255,17 @@ void MainWindow::compareResults(wxCommandEvent& event) {
 	const uint chainCount2 = std::stoi(str2);
 
 	// If the chain count is different, the results are not the same. Rocket science.
-	if (chainCount1 != chainCount2) {
-		wxMessageBox("NO", "", wxOK);
-		return;
-	}
+	//if (chainCount1 != chainCount2) {
+	//	wxMessageBox("NO", "", wxOK);
+	//	return;
+	//}
 
 	// Reading the chain values.
-	std::vector<int> chain1((std::istream_iterator<int>(if1)), std::istream_iterator<int>());
-	std::vector<int> chain2((std::istream_iterator<int>(if2)), std::istream_iterator<int>());
+	std::vector<double> chain1((std::istream_iterator<double>(if1)), std::istream_iterator<double>());
+	std::vector<double> chain2((std::istream_iterator<double>(if2)), std::istream_iterator<double>());
 
-	for (int i = 0; i < chain1.size(); i++) {
-		if (difference(chain1[i], chain2[i]) > 5) {
+	for (uint i = 0; i < static_cast<uint>(0.7 * chain1.size()); i++) {
+		if (difference(chain1[i], chain2[i]) > 0.06) {
 			wxMessageBox("NO", "", wxOK);
 			return;
 		}

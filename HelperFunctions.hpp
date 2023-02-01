@@ -44,7 +44,7 @@ bool isInTolerance(const double value, const double desiredValue, const double t
 /// <param name="value1">: first value</param>
 /// <param name="value2">: second value</param>
 /// <returns>difference</returns>
-uint difference(const int value1, const int value2);
+double difference(const double value1, const double value2);
 
 /// <summary>
 /// Calculation of a Euclidean distance between two pixels.
@@ -56,7 +56,7 @@ double distance(const Pixel& p1, const Pixel& p2);
 
 
 
-// BRESENHAM
+// RASTERIZATION
 /// <summary>
 /// Calculation of end pixel of the line segment (input for Bresenham algorithm).
 /// </summary>
@@ -74,6 +74,17 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 /// <param name="pixelField">: pixel field of the rasterized scene with an object</param>
 /// <returns>list of pixels of the rasterized line segment</returns>
 std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField);
+
+
+/// <summary>
+/// Cleary-Wyvill rasterization algorithm.
+/// </summary>
+/// <param name="startPoint">: start pixel of the line segment</param>
+/// <param name="endPoint">: end pixel of the line segment</param>
+/// <param name="pixelField">: pixel field of the rasterized scene with an object</param>
+/// <param name="angleOfRotation">: angle of the line segment in radians</param>
+/// <returns>list of pixels of the rasterized line segment</returns>
+std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField, const double angleOfRotation);
 
 
 
