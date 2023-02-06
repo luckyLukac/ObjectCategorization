@@ -241,11 +241,11 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 	}
 
 	if (pixels.size() > 1) {
-		for (uint i = 0; i < pixels.size() - 1; i += 2) {
+		for (uint i = 0; i < pixels.size() - 1; i += 1) {
 			const double d = distance(pixels[i], pixels[i + 1]);
 			if (d < 2.5) {
 				pixels.erase(pixels.begin() + i, pixels.begin() + i + 1);
-				i -= 2;
+				i -= 1;
 			}
 		}
 	}
@@ -266,13 +266,26 @@ void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& ras
 		return;
 	}
 
+	if (edgePixel.size() != edgePixelCount && edgePixelCount != 0 && edgePixel.size() != 0) {
+		for (const Pixel& pixel : rasterizedLine) {
+			if (pixel.y < 0 || pixel.y >= maxCoordinate || pixel.x < 0 || pixel.x >= maxCoordinate) {
+				continue;
+			}
+
+			wall[pixel.y][pixel.x] = true;
+			//fillRectangle(dc, pixel.x, pixel.y, 1, maxCoordinate, *wxBLACK_PEN, *wxBLACK_BRUSH, plotRatio);
+		}
+	}
+
 	// Finding the middle points between the edge pixels.
 	for (uint i = 0; i < edgePixel.size() - 1; i += 2) {
 		// Calculating middle X and Y coordinates.
-		const int xDouble = static_cast<int>((edgePixel[i].x + edgePixel[i + 1].x) / 2.0);
-		const int yDouble = static_cast<int>((edgePixel[i].y + edgePixel[i + 1].y) / 2.0);
-		const int x = static_cast<int>(xDouble);
-		const int y = static_cast<int>(yDouble);
+		const int x = static_cast<int>((edgePixel[i].x + edgePixel[i + 1].x) / 2.0);
+		const int y = static_cast<int>((edgePixel[i].y + edgePixel[i + 1].y) / 2.0);
+
+		if (y == 700) {
+			int akosdkidodajo = 5;
+		}
 
 		// If the center point lies inside of the object, a red rectangle is drawn there.
 		if (pixelField[y][x].position == Position::inside && std::find(midPointPixels.begin(), midPointPixels.end(), Pixel(x, y)) == midPointPixels.end()) {
@@ -280,6 +293,16 @@ void LineSweeping::addCurrentMidpointFromSweepLine(const std::vector<Pixel>& ras
 			midPointPixels.push_back(Pixel(x, y));
 			fillRectangle(dc, x, y, 1, maxCoordinate, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
 		}
+	}
+
+	edgePixelCount = edgePixel.size();
+
+	// Building walls.
+	for (uint i = 2; i < edgePixel.size(); i += 2) {
+		const int x = static_cast<int>((edgePixel[i - 1].x + edgePixel[i].x) / 2.0);
+		const int y = static_cast<int>((edgePixel[i - 1].y + edgePixel[i].y) / 2.0);
+		wall[y][x] = true;
+		//fillRectangle(dc, x, y, 1, maxCoordinate, *wxBLACK_PEN, *wxBLACK_BRUSH, plotRatio);
 	}
 }
 
@@ -289,6 +312,14 @@ void LineSweeping::chainExtractionPixelCheck(std::queue<MidPoint>& queue, const 
 		queue.push(midPoints[y][x]);
 		midPoints[y][x].used = true;
 	}
+}
+
+bool LineSweeping::chainExtractionWallCheck(const int x, const int y) {
+	if (x >= 0 && x < maxCoordinate && y >= 0 && y < maxCoordinate && wall[y][x]) {
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -327,7 +358,7 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 void LineSweeping::plotSegments(wxDC& dc) const {
 	for (const Chain& segment : chains) {
 		for (const LineSegment& ls : segment.lineSegments) {
-			dc.DrawLine(ls.p1.x, maxCoordinate - ls.p1.y, ls.p2.x, maxCoordinate - ls.p2.y);
+			dc.DrawLine(ls.p1.x * plotRatio, (maxCoordinate - ls.p1.y) * plotRatio, ls.p2.x * plotRatio, (maxCoordinate - ls.p2.y) * plotRatio);
 		}
 	}
 }
@@ -601,6 +632,7 @@ void LineSweeping::sweep() {
 	// Creating a Bresenham point vector.
 	std::vector<Pixel> bresenhamPixels(maxCoordinate);
 	midPoints = std::vector<std::vector<MidPoint>>(maxCoordinate, std::vector<MidPoint>(maxCoordinate, MidPoint()));
+	wall = std::vector<std::vector<bool>>(maxCoordinate, std::vector<bool>(maxCoordinate, false));
 	midPointPixels.clear();
 
 	// If the line is horizontal, there is no need for sophisticated rasterization method.
@@ -650,7 +682,7 @@ void LineSweeping::sweep() {
 	// If the line is neither horizontal nor vertical, we have to reach for Bresenham rasterization algorithm.
 	else {
 		if (toDegrees(angleOfRotation) < 90.0) {
-			for (int y = 0; y < maxCoordinate; y += 2) {
+			for (int y = 0; y < maxCoordinate; y += 1) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
@@ -658,7 +690,7 @@ void LineSweeping::sweep() {
 				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, angleOfRotation);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
-			for (int x = 0; x < maxCoordinate; x += 2) {
+			for (int x = 0; x < maxCoordinate; x += 1) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint = Pixel(x, maxCoordinate);
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
@@ -668,7 +700,7 @@ void LineSweeping::sweep() {
 			}
 		}
 		else if (toDegrees(angleOfRotation) < 180.0) {
-			for (int x = 0; x < maxCoordinate; x += 2) {
+			for (int x = 0; x < maxCoordinate; x += 1) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(x, maxCoordinate));
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), angleOfRotation, maxCoordinate);
@@ -676,7 +708,7 @@ void LineSweeping::sweep() {
 				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, angleOfRotation);  // Rasterization method.
 				addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 			}
-			for (int y = maxCoordinate; y >= 0; y -= 2) {
+			for (int y = maxCoordinate; y >= 0; y -= 1) {
 				// Bresenham rasterization algorithm.
 				auto startPoint(Pixel(maxCoordinate, y));
 				auto endPoint = getEndPointForBresenham(startPoint, angleOfRotation, maxCoordinate);
@@ -713,6 +745,25 @@ void LineSweeping::extractChains() {
 
 				// Exctraction of vicinity pixels.
 				const int vicinity = 3;
+				//bool wall = false;
+				//for (int checkY = -vicinity; checkY <= vicinity; checkY++) {
+				//	if (wall) {
+				//		break;
+				//	}
+
+				//	for (int checkX = -vicinity; checkX <= vicinity; checkX++) {
+				//		if (wall) {
+				//			break;
+				//		}
+
+				//		wall = chainExtractionWallCheck(currentX + checkX, currentY + checkY);
+				//	}
+				//}
+
+				//if (wall) {
+				//	continue;
+				//}
+
 				for (int checkY = -vicinity; checkY <= vicinity; checkY++) {
 					for (int checkX = -vicinity; checkX <= vicinity; checkX++) {
 						chainExtractionPixelCheck(queue, currentX + checkX, currentY + checkY);
@@ -721,10 +772,11 @@ void LineSweeping::extractChains() {
 			}
 
 			Chain currentSegment;
-			currentSegment.lineSegments = douglasPeucker(currentMidPoints, LineSegment(*currentMidPoints.begin(), currentMidPoints.back()), 5.0);
-			const double ddd = currentSegment.totalLength();
+			currentSegment.lineSegments = douglasPeucker(currentMidPoints, LineSegment(*currentMidPoints.begin(), currentMidPoints.back()), 1000.1);
+			const double ddd = currentSegment.totalLength() / plotRatio;
 
-			if (ddd > 1 /*0.05 * maxCoordinate*/) {
+			//if (ddd > 0.05 * maxCoordinate) {
+			if (true) {
 				currentSegment.angle = toDegrees(angleOfRotation);
 
 				chains.push_back(currentSegment);
@@ -758,15 +810,17 @@ FeatureVector LineSweeping::calculateFeatureVector() const {
 		}
 	);
 
-	const double maxLen = featureVector.chainLengths[0];
-	std::transform(
-		featureVector.chainLengths.begin(),
-		featureVector.chainLengths.end(),
-		featureVector.chainLengths.begin(),
-		[&maxLen](double d) {
-			return d / maxLen;
-		}
-	);
+	if (!featureVector.chainLengths.empty()) {
+		const double maxLen = featureVector.chainLengths[0];
+		std::transform(
+			featureVector.chainLengths.begin(),
+			featureVector.chainLengths.end(),
+			featureVector.chainLengths.begin(),
+			[&maxLen](double d) {
+				return d / maxLen;
+			}
+		);
+	}
 
 	return featureVector;
 }

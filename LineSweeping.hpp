@@ -25,9 +25,11 @@ public:
 	PixelField pixelField;				 // Pixel field with pixels and their positions according to the object (edge, outside or inside).
 	int maxCoordinate = 0;				 // Maximum coordinate.
 	double plotRatio = 1.0;			     // Ratio factor for drawing.
+	uint edgePixelCount = 0;
 
 	double angleOfRotation = 0.0;			       // Sweep line angle of rotation [0°-180°].
 	std::vector<std::vector<MidPoint>> midPoints;  // Middle points found while sweeping.
+	std::vector<std::vector<bool>> wall;
 	std::vector<Pixel> midPointPixels;			   // List of midpoints.
 	std::vector<Chain> chains;		               // Vector of segments.
 
@@ -38,6 +40,7 @@ public:
 	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;																							   // Finding edge pixel pairs.
 	void addCurrentMidpointFromSweepLine(const std::vector<Pixel>& rasterizedLine);																								   // Adding the current midpoint and plotting the Bresenham line.
 	void chainExtractionPixelCheck(std::queue<MidPoint>& queue, const int x, const int y);																						   // Checking whether the pixel should belong to the current chain.
+	bool chainExtractionWallCheck(const int x, const int y);
 
 
 

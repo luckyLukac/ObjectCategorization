@@ -177,7 +177,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.fillShape();						  // Filling the object.
 
 	// Sweeping the object.
-	for (int i = 90; i <= 90; i += 15) {
+	for (int i = 15; i <= 180; i += 45) {
 		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		sweep.sweep();						      // Sweeping the object with the sweep line.
 		sweep.extractChains();				      // Extraction of chains from the object.
