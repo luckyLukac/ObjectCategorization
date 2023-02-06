@@ -210,8 +210,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="Chain.hpp" />
     <ClInclude Include="ChainCode.hpp" />
+    <ClInclude Include="Constants.hpp" />
+    <ClInclude Include="FeatureVector.hpp" />
     <ClInclude Include="HelperFunctions.hpp" />
+    <ClInclude Include="LineSegment.hpp" />
     <ClInclude Include="LineSweeping.hpp" />
     <ClInclude Include="MainWindow.hpp" />
     <ClInclude Include="Pixel.hpp" />
@@ -220,7 +224,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="Chain.cpp" />
     <ClCompile Include="ChainCode.cpp" />
+    <ClCompile Include="FeatureVector.cpp" />
     <ClCompile Include="HelperFunctions.cpp" />
     <ClCompile Include="LineSweeping.cpp" />
     <ClCompile Include="MainWindow.cpp" />
