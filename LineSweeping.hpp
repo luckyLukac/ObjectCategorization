@@ -34,8 +34,9 @@ public:
 	void calculateCoordinatesFromChainCode();																																	   // Transforming chain code to coordinates.
 	void calculateBoundingBox();																																				   // Calculation of a bounding box according to point coordinates.
 	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const int maxCoordinate, const wxPen& pen, const wxBrush& brush, const double ratio = 1.0) const;  // Filling a rectangle at X and Y coordinates.
-	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine, bool extended = false) const;																							   // Finding edge pixel pairs.
+	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine, bool extended = false) const;																	   // Finding edge pixel pairs.
 	void buildChainsIteratively(const std::vector<Pixel>& rasterizedLine);																										   // Iterative chain building.
+	bool isEdgePixelInVicinity(const uint vicinity, const Pixel& currentPixel, const Pixel& targetPixel);																		   // Checking whether a target pixel is in the vicinity of the current pixel on the object edge.
 
 
 public:
