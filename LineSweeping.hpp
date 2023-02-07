@@ -26,6 +26,7 @@ public:
 	double plotRatio = 1.0;			     // Ratio factor for drawing.
 	uint edgePixelCount = 0;
 
+	std::vector<Pixel> previousEdgePixels;
 	double sweepAngle = 0.0;			 // Sweep line angle of rotation [0°-180°].
 	std::vector<Chain> chains;		     // Vector of segments.
 

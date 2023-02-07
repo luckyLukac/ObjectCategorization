@@ -25,6 +25,8 @@ void LineSweeping::calculateCoordinatesFromChainCode() {
 		currentY = chainCode.startPoint.y;
 		point.x = currentX;
 		point.y = currentY;
+		point.directionNext = chainCode.code.front();
+		point.directionPrevious = (chainCode.code.back() + 4) % 8;
 		coordinates.push_back(point);
 
 		// Iterating through the chain code.
@@ -71,6 +73,8 @@ void LineSweeping::calculateCoordinatesFromChainCode() {
 			// Adding a new coordinate to the vector.
 			point.x = currentX;
 			point.y = currentY;
+			point.directionPrevious = (point.directionNext + 4) % 8;
+			point.directionNext = direction;
 			coordinates.push_back(point);
 		}
 
@@ -121,7 +125,7 @@ void LineSweeping::calculateBoundingBox() {
 		coordinates.end(),
 		coordinates.begin(),
 		[&xMin, &yMin](Pixel point) {
-			return Pixel(point.x - xMin, point.y - yMin);
+			return Pixel(point.x - xMin, point.y - yMin, Position::undefined, point.directionPrevious, point.directionNext);
 		}
 	);
 
@@ -154,7 +158,7 @@ void LineSweeping::calculateBoundingBox() {
 		coordinates.end(),
 		coordinates.begin(),
 		[&magnifiedX, &magnifiedY](const Pixel& point) {
-			return Pixel(point.x + magnifiedX, point.y + magnifiedY);
+			return Pixel(point.x + magnifiedX, point.y + magnifiedY, Position::undefined, point.directionPrevious, point.directionNext);
 		}
 	);
 
@@ -177,6 +181,12 @@ void LineSweeping::calculateBoundingBox() {
 		for (int x = 0; x < maxCoordinate; x++) {
 			pixelField[y].push_back(Pixel(x, y, Position::undefined));
 		}
+	}
+
+	for (const Pixel& coordinate : coordinates) {
+		pixelField[coordinate.y][coordinate.x].position = Position::edge;
+		pixelField[coordinate.y][coordinate.x].directionPrevious = coordinate.directionPrevious;
+		pixelField[coordinate.y][coordinate.x].directionNext = coordinate.directionNext;
 	}
 }
 
@@ -227,13 +237,34 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 
 // Iterative chain building.
 void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLine) {
-	const std::vector edgePixels = findEdgePixels(rasterizedLine, true);  // Finding edge pixels on the rasterized line.
+	const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine, true);  // Finding edge pixels on the rasterized line.
+	const int vicinity = 3;
 
-	if (!edgePixels.empty()) {
-		int dioa = 5;
+	// Finding matching pixels on the edge.
+	for (int i = 0; i < edgePixels.size(); i++) {
+		Pixel currentPixel = edgePixels[i];
+
+		for (int j = 0; j < previousEdgePixels.size(); j++) {
+
+		}
 	}
 
-	return;
+	// Current edge pixels become previous. Everyone gets old sometimes.
+	previousEdgePixels = edgePixels;
+}
+
+// Checking whether a target pixel is in the vicinity of the current pixel on the object edge.
+bool LineSweeping::isEdgePixelInVicinity(const uint vicinity, const Pixel& currentPixel, const Pixel& targetPixel) {
+	Pixel iteratingPixel = currentPixel;
+	
+	for (uint i = 0; i < vicinity; i++) {
+		// If the iterating and the target pixel match, we count success.
+		if (iteratingPixel == targetPixel) {
+			return true;
+		}
+
+		iteratingPixel = pixelField[]
+	}
 }
 
 
@@ -270,9 +301,9 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 
 // Plotting the segments.
 void LineSweeping::plotChains(wxDC& dc) const {
-	for (const Chain& segment : chains) {
-		for (const LineSegment& ls : segment.lineSegments) {
-			dc.DrawLine(ls.p1.x * plotRatio, (maxCoordinate - ls.p1.y) * plotRatio, ls.p2.x * plotRatio, (maxCoordinate - ls.p2.y) * plotRatio);
+	for (const Chain& chain : chains) {
+		for (uint i = 1; i < chain.pixels.size(); i++) {
+			dc.DrawLine(chain.pixels[i - 1].x * plotRatio, (maxCoordinate - chain.pixels[i - 1].y) * plotRatio, chain.pixels[i].x * plotRatio, (maxCoordinate - chain.pixels[i].y) * plotRatio);
 		}
 	}
 }
@@ -351,7 +382,7 @@ bool LineSweeping::readFileF8(std::string file, const uint rotation) {
 
 		// Adding a new chain code.
 		std::getline(in, value);
-		ChainCode chainCode(value, clockwise, Pixel(startX, startY), rotation);
+		ChainCode chainCode(value, clockwise, Pixel(startX, startY, Position::undefined), rotation);
 		chainCodes.push_back(chainCode);
 	}
 
@@ -461,6 +492,8 @@ void LineSweeping::fillShape() {
 
 			// Setting the current pixel to edge.
 			pixelField[y][x].position = Position::edge;
+			pixelField[y][x].directionPrevious = coordinates[startCoordinate + i].directionPrevious;
+			pixelField[y][x].directionNext = coordinates[startCoordinate + i].directionNext;
 		}
 
 		leftStack = std::stack<uint>();
@@ -491,7 +524,7 @@ void LineSweeping::sweep() {
 	if (isInTolerance(sweepAngle, 0.0)) {
 		// Creating the starting line segment points.
 		for (int i = 0; i < maxCoordinate; i++) {
-			bresenhamPixels[i] = Pixel(i, 0, pixelField[0][i].position);
+			bresenhamPixels[i] = Pixel(i, 0, pixelField[0][i].position, pixelField[0][i].directionPrevious, pixelField[0][i].directionNext);
 		}
 
 		// Moving the rasterized line segment vertically.
@@ -504,7 +537,7 @@ void LineSweeping::sweep() {
 				bresenhamPixels.end(),
 				bresenhamPixels.begin(),
 				[this](const Pixel& pixel) {
-					return Pixel(pixel.x, pixel.y + 1, pixelField[pixel.y + 1][pixel.x].position);
+					return Pixel(pixel.x, pixel.y + 1, pixelField[pixel.y + 1][pixel.x].position, pixelField[pixel.y + 1][pixel.x].directionPrevious, pixelField[pixel.y + 1][pixel.x].directionNext);
 				}
 			);
 		}
@@ -513,7 +546,7 @@ void LineSweeping::sweep() {
 	else if (isInTolerance(sweepAngle, toRadians(90))) {
 		// Creating the starting line segment points.
 		for (int i = 0; i < maxCoordinate; i++) {
-			bresenhamPixels[i] = Pixel(0, i, pixelField[i][0].position);
+			bresenhamPixels[i] = Pixel(0, i, pixelField[i][0].position, pixelField[i][0].directionPrevious, pixelField[i][0].directionNext);
 		}
 
 		// Moving the rasterized line segment vertically.
@@ -526,7 +559,7 @@ void LineSweeping::sweep() {
 				bresenhamPixels.end(),
 				bresenhamPixels.begin(),
 				[this](const Pixel& pixel) {
-					return Pixel(pixel.x + 1, pixel.y, pixelField[pixel.y][pixel.x + 1].position);
+					return Pixel(pixel.x + 1, pixel.y, pixelField[pixel.y][pixel.x + 1].position, pixelField[pixel.y][pixel.x + 1].directionPrevious, pixelField[pixel.y][pixel.x + 1].directionNext);
 				}
 			);
 		}
@@ -584,7 +617,7 @@ FeatureVector LineSweeping::calculateFeatureVector() const {
 		chainVector.begin(),
 		chainVector.end(),
 		[](const Chain& s1, const Chain& s2) {
-			return s1.lineSegments.size() > s2.lineSegments.size();
+			return s1.pixels.size() > s2.pixels.size();
 		}
 	);
 

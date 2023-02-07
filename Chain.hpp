@@ -2,48 +2,27 @@
 
 #include <vector>
 
+#include "Constants.hpp"
 #include "LineSegment.hpp"
 #include "Pixel.hpp"
-
-
-// STRUCTURES
-struct MidPoint {
-	Pixel point;
-	double angle;
-	bool valid;
-	bool used;
-
-	MidPoint() : angle(0.0), valid(false), used(false) {}
-	MidPoint(const Pixel& point, const double angle, const bool valid, const bool used) : point(point), angle(angle), valid(valid), used(used) {}
-};
-
-// Object bounding box structure.
-struct BoundingBox {
-	int deltaX;
-	int deltaY;
-
-	BoundingBox() : deltaX(0), deltaY(0) {}
-	BoundingBox(const int deltaX, const int deltaY) : deltaX(deltaX), deltaY(deltaY) {}
-};
-
-
-// ALIASES
-using PixelField = std::vector<std::vector<Pixel>>;
 
 
 /// <summary>
 /// Chain structure.
 /// </summary>
 struct Chain {
-	std::vector<LineSegment> lineSegments;  // The obtained polyline.
-	double angle = 0.0;						// Sweep-line angle.
+	std::vector<Pixel> pixels;  // The obtained pixels.
+	double angle = 0.0;			// Sweep-line angle.
 
-	// Getting the total length of all line segments.
+	/// <summary>
+	/// Calculation of the total length of all line segments between the pixel pairs.
+	/// </summary>
+	/// <returns>total length of the chain</returns>
 	double totalLength() const {
 		double length = 0.0;
 
-		for (const LineSegment& ls : lineSegments) {
-			length += ls.length();
+		for (uint i = 1; i < pixels.size(); i++) {
+			length += LineSegment(pixels[i - 1], pixels[i]).length();
 		}
 
 		return length;

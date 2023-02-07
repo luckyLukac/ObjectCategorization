@@ -38,7 +38,7 @@ MainWindow::MainWindow() :
 	lblChainCodeLoading = new wxStaticText(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("File:"), wxDefaultPosition, wxDefaultSize, 0);
 	lblChainCodeLoading->Wrap(-1);
 	lytChainCodeLoadingFile->Add(lblChainCodeLoading, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-	tbxChainCodeLoading = new wxTextCtrl(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("./F8 Datasets/fcced_shuttle.txt"), wxDefaultPosition, wxDefaultSize, 0);
+	tbxChainCodeLoading = new wxTextCtrl(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("./F8 Datasets/fcced_circle.txt"), wxDefaultPosition, wxDefaultSize, 0);
 	tbxChainCodeLoading->Enable(false);
 	tbxChainCodeLoading->SetMinSize(wxSize(200, -1));
 	lytChainCodeLoadingFile->Add(tbxChainCodeLoading, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);

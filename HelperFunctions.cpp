@@ -163,7 +163,7 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 		for (int i = 0; i <= std::abs(deltaX); i++) {
 			// Adding the new pixel to the vector.
 			if (x >= 0 && x != pixelField.size() && y >= 0 && y != pixelField.size()) {
-				pixels.push_back(Pixel(x, y, pixelField[y][x].position));
+				pixels.push_back(Pixel(x, y, pixelField[y][x].position, pixelField[y][x].directionPrevious, pixelField[y][x].directionNext));
 			}
 
 			// Adding the correct values to X and Y coordinates.
@@ -183,7 +183,7 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 		for (int i = 0; i <= std::abs(deltaY); i++) {
 			// Adding the new pixel to the vector.
 			if (x != pixelField.size() && y != pixelField.size()) {
-				pixels.push_back(Pixel(x, y));
+				pixels.push_back(Pixel(x, y, pixelField[y][x].position, pixelField[y][x].directionPrevious, pixelField[y][x].directionNext));
 			}
 
 			// Adding the correct values to X and Y coordinates.
