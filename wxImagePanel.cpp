@@ -23,7 +23,7 @@ namespace GUI {
 		if (segmentFlag) {
 			sweep->plotInput(dc);        // Plotting the chain code shape.
 			sweep->plotBoundingBox(dc);  // Plotting the bounding box of the object.
-			sweep->plotSegments(dc);     // Plotting the segments of the sweep algorithm.
+			sweep->plotChains(dc);       // Plotting the segments of the sweep algorithm.
 		}
 	}
 

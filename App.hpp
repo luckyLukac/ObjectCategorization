@@ -12,5 +12,5 @@ public:
 	/// Initialization method for the app.
 	/// </summary>
 	/// <returns></returns>
-	virtual bool OnInit();
+	virtual bool OnInit() override;
 };
