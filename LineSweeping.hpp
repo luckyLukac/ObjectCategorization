@@ -27,7 +27,7 @@ public:
 	uint edgePixelCount = 0;
 
 	std::vector<Pixel> previousEdgePixels;
-	std::vector<Pixel> previousPixels;
+	std::vector<Pixel> previousActualEdgePixels;
 	double sweepAngle = 0.0;			 // Sweep line angle of rotation [0°-180°].
 	std::vector<Chain> chains;		     // Vector of segments.
 

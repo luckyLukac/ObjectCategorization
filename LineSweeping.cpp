@@ -239,26 +239,27 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLine) {
 	wxClientDC dc(drawWindow);
 
+	if (rasterizedLine[0].y == 81)
+	{
+		int aidosj = 5;
+	}
+
 	const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine, true);  // Finding edge pixels on the rasterized line.
 	const int vicinity = 3;
 
 	std::vector<Pixel> currentEdgePixels;
-	std::vector<Pixel> suitablePairs;
 
 	// Finding matching pixels on the edge.
-	for (int i = 0; i < edgePixels.size(); i++) {
-		Pixel currentEdgePixel = edgePixels[i];
-
-		for (int j = 0; j < previousEdgePixels.size(); j++) {
-			if (isEdgePixelInVicinity(vicinity, currentEdgePixel, previousEdgePixels[j])) {
+	for (const Pixel& currentEdgePixel : edgePixels) {
+		for (const Pixel& previousEdgePixel : previousEdgePixels) {
+			if (isEdgePixelInVicinity(vicinity, currentEdgePixel, previousEdgePixel)) {
 				currentEdgePixels.push_back(currentEdgePixel);
-				suitablePairs.push_back(previousEdgePixels[j]);
 				break;
 			}
 		}
 	}
 
-	if (previousPixels.empty()) {
+	if (previousActualEdgePixels.empty()) {
 		for (int i = 1; i < edgePixels.size(); i++) {
 			Pixel p((edgePixels[i - 1] + edgePixels[i]) / 2.0);
 			
@@ -268,43 +269,56 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 				newChain.pixels.push_back(p);
 				chains.push_back(newChain);
 
-				currentEdgePixels.push_back(edgePixels[i - 1]);
-				currentEdgePixels.push_back(edgePixels[i]);
+				if (currentEdgePixels.empty()) {
+					currentEdgePixels = edgePixels;
+				}
 			}
 		}
 	}
 	else {
+		uint count = 1;
 		for (int i = 1; i < currentEdgePixels.size(); i++) {
 			if (currentEdgePixels.empty()) {
 				break;
 			}
 
-			const Pixel previousMidPixel = (suitablePairs[i - 1] + suitablePairs[i]) / 2.0;
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
-			auto it = std::find_if(chains.begin(), chains.end(), [&previousMidPixel](const Chain& chain) {
-				return distance(chain.pixels.back(), previousMidPixel) < 2;
-			});
-			
+
 			if (pixelField[midPixel.y][midPixel.x].position != Position::inside) {
 				continue;
 			}
 
-			if (it == chains.end()) {
+			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
 				newChain.angle = toDegrees(sweepAngle);
 				newChain.pixels.push_back(midPixel);
 				chains.push_back(newChain);
 			}
 			else {
-				it->pixels.push_back(midPixel);
-				dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+				const Pixel previousMidPixel = (previousActualEdgePixels[count - 1] + previousActualEdgePixels[count]) / 2.0;
+				auto it = std::find_if(chains.begin(), chains.end(), [&previousMidPixel](const Chain& chain) {
+					return distance(chain.pixels.back(), previousMidPixel) < 2;
+				});
+
+
+				if (it == chains.end()) {
+					Chain newChain;
+					newChain.angle = toDegrees(sweepAngle);
+					newChain.pixels.push_back(midPixel);
+					chains.push_back(newChain);
+				}
+				else {
+					it->pixels.push_back(midPixel);
+					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+					count += 2;
+				}
 			}
 		}
 	}
 
 	// Current edge pixels become previous. Everyone gets old sometimes.
-	previousPixels = currentEdgePixels;
 	previousEdgePixels = edgePixels;
+	previousActualEdgePixels = currentEdgePixels;
 }
 
 // Checking whether a target pixel is in the vicinity of the current pixel on the object edge.
@@ -674,16 +688,16 @@ void LineSweeping::sweep() {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, sweepAngle, maxCoordinate);
-				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
-				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
 				buildChainsIteratively(rasterizedLine);  // Iterative chain building.
 			}
 			for (int x = 0; x < maxCoordinate; x += 1) {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint = Pixel(x, maxCoordinate);
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), sweepAngle, maxCoordinate);
-				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
-				std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, PI - sweepAngle);  // Rasterization method.
+				std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
+				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, PI - sweepAngle);  // Rasterization method.
 				//addCurrentMidpointFromSweepLine(rasterizedLine);  // Adding midpoints according to the sweep line.
 				buildChainsIteratively(rasterizedLine);  // Iterative chain building.
 			}
