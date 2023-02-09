@@ -27,8 +27,10 @@ public:
 	uint edgePixelCount = 0;
 
 	std::vector<Pixel> previousEdgePixels;
+	std::vector<Pixel> previousPixels;
 	double sweepAngle = 0.0;			 // Sweep line angle of rotation [0°-180°].
 	std::vector<Chain> chains;		     // Vector of segments.
+
 
 	// PRIVATE HELPER METHODS
 	void calculateCoordinatesFromChainCode();																																	   // Transforming chain code to coordinates.
@@ -37,6 +39,7 @@ public:
 	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine, bool extended = false) const;																	   // Finding edge pixel pairs.
 	void buildChainsIteratively(const std::vector<Pixel>& rasterizedLine);																										   // Iterative chain building.
 	bool isEdgePixelInVicinity(const uint vicinity, const Pixel& currentPixel, const Pixel& targetPixel);																		   // Checking whether a target pixel is in the vicinity of the current pixel on the object edge.
+	Pixel chainCodeMovePixel(const Pixel& currentPixel, const short direction);																									   // Obtaining a new pixel after chain code move.
 
 
 public:

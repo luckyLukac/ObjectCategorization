@@ -215,10 +215,6 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 	// Calculation of delta X and delta Y distances.
 	double deltaX = std::abs(1 / std::sin(PI / 2 - angleOfRotation));
 	double deltaY = std::abs(1 / std::cos(PI / 2 - angleOfRotation));
-	//if (angleOfRotation > PI / 2) {
-	//	deltaX = std::tan(PI / 2 - angleOfRotation);
-	//	deltaY = 1 / std::tan(PI / 2 - angleOfRotation);
-	//}
 
 	double dX = deltaX;
 	double dY = deltaY;
@@ -226,7 +222,6 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 	Pixel currentPixel = startPoint;
 	pixels.push_back(Pixel(currentPixel));
 
-	//while (currentPixel.x < endPoint.x || currentPixel.y > endPoint.y) {
 	while (
 		currentPixel != Pixel(endPoint.x - 1, endPoint.y - 1) &&
 		currentPixel != Pixel(endPoint.x, endPoint.y - 1) &&
@@ -239,19 +234,19 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 		currentPixel != Pixel(endPoint.x + 1, endPoint.y + 1)
 	)
 	{
-		//if (endPoint.x == 522 && endPoint.y == 382 && currentPixel.x == 520) {
-		//	int pop = 5;
-		//}
+		if (currentPixel.x >= pixelField.size() || currentPixel.y >= pixelField.size()) {
+			break;
+		}
 
 		if (dX <= dY) {
 			currentPixel.x += pX;
 			dX += deltaX;
-			pixels.push_back(Pixel(currentPixel));
+			pixels.push_back(Pixel(currentPixel.x, currentPixel.y, pixelField[currentPixel.y][currentPixel.x].position, pixelField[currentPixel.y][currentPixel.x].directionPrevious, pixelField[currentPixel.y][currentPixel.x].directionNext));
 		}
 		else {
 			currentPixel.y += pY;
 			dY += deltaY;
-			pixels.push_back(Pixel(currentPixel));
+			pixels.push_back(Pixel(currentPixel.x, currentPixel.y, pixelField[currentPixel.y][currentPixel.x].position, pixelField[currentPixel.y][currentPixel.x].directionPrevious, pixelField[currentPixel.y][currentPixel.x].directionNext));
 		}
 	}
 	

@@ -24,7 +24,10 @@ struct Pixel {
 	Pixel(const int x, const int y, const Position& position = Position::undefined, const short directionPrevious = -1, const short directionNext = -1);
 
 	bool operator == (const Pixel& pixel) const;
+	Pixel operator + (const Pixel& pixel) const;
+	Pixel operator / (const double factor) const;
 };
+
 
 
 // ALIASES
