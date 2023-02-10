@@ -239,11 +239,6 @@ std::vector<Pixel> LineSweeping::findEdgePixels(const std::vector<Pixel>& raster
 void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLine) {
 	wxClientDC dc(drawWindow);
 
-	if (rasterizedLine[0].y == 81)
-	{
-		int aidosj = 5;
-	}
-
 	const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine, true);  // Finding edge pixels on the rasterized line.
 	const int vicinity = 3;
 
@@ -284,7 +279,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			if (pixelField[midPixel.y][midPixel.x].position != Position::inside) {
+			if (pixelField[midPixel.y][midPixel.x].position != Position::inside && edgePixels.size() < previousEdgePixels.size()) {
 				continue;
 			}
 
@@ -295,13 +290,26 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 				chains.push_back(newChain);
 			}
 			else {
-				const Pixel previousMidPixel = (previousActualEdgePixels[count - 1] + previousActualEdgePixels[count]) / 2.0;
-				auto it = std::find_if(chains.begin(), chains.end(), [&previousMidPixel](const Chain& chain) {
-					return distance(chain.pixels.back(), previousMidPixel) < 2;
-				});
+				//const Pixel previousMidPixel = (previousActualEdgePixels[count - 1] + previousActualEdgePixels[count]) / 2.0;
+				//auto it = std::find_if(chains.begin(), chains.end(), [&previousMidPixel](const Chain& chain) {
+				//	return distance(chain.pixels.back(), previousMidPixel) < 2;
+				//});
 
+				Pixel previousMidPixel;
+				std::vector<Chain>::iterator it;
+				for (uint count2 = 1; count2 < previousActualEdgePixels.size(); count2 += 2) {
+					previousMidPixel = (previousActualEdgePixels[count2 - 1] + previousActualEdgePixels[count2]) / 2.0;
 
-				if (it == chains.end()) {
+					it = std::find_if(chains.begin(), chains.end(), [&previousMidPixel](const Chain& chain) {
+						return distance(chain.pixels.back(), previousMidPixel) < 2;
+					});
+
+					if (it != chains.end() && distance(previousMidPixel, midPixel) < 10) {
+						break;
+					}
+				}
+
+				if (it == chains.end() || distance(previousMidPixel, midPixel) > 10) {
 					Chain newChain;
 					newChain.angle = toDegrees(sweepAngle);
 					newChain.pixels.push_back(midPixel);
@@ -416,13 +424,26 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 	}
 }
 
+std::string colors[] = { "red", "blue", "green", "yellow", "black", "magenta", "cyan" };
+
 // Plotting the segments.
 void LineSweeping::plotChains(wxDC& dc) const {
+	uint color = 0;
 	for (const Chain& chain : chains) {
+		dc.SetPen(wxPen(wxColor(colors[color]), 2));
+		
 		for (uint i = 1; i < chain.pixels.size(); i++) {
 			dc.DrawLine(chain.pixels[i - 1].x * plotRatio, (maxCoordinate - chain.pixels[i - 1].y) * plotRatio, chain.pixels[i].x * plotRatio, (maxCoordinate - chain.pixels[i].y) * plotRatio);
 		}
+
+		color = (color + 1) % 7;
 	}
+
+	//for (const Chain& chain : chains) {
+	//	for (const Pixel& pixel : chain.pixels) {
+	//		fillRectangle(dc, pixel.x, pixel.y, 1, maxCoordinate, *wxRED_PEN, *wxRED_BRUSH, plotRatio);
+	//	}
+	//}
 }
 
 
@@ -725,6 +746,11 @@ void LineSweeping::sweep() {
 	}
 
 	std::sort(chains.begin(), chains.end(), [](const Chain& chain1, const Chain& chain2) { return chain1.pixels.size() > chain2.pixels.size(); });
+	//const double maxLength = chains[0].totalLength();
+	//chains.erase(std::remove_if(chains.begin(), chains.end(), [maxLength](const Chain& chain) { return (chain.totalLength() / maxLength) < 0.2; }), chains.end());
+
+	previousEdgePixels.clear();
+	previousActualEdgePixels.clear();
 }
 
 // Calculation of a feature vector.
@@ -763,6 +789,11 @@ FeatureVector LineSweeping::calculateFeatureVector() const {
 			}
 		);
 	}
+
+	featureVector.chainLengths.erase(
+		std::remove_if(featureVector.chainLengths.begin(), featureVector.chainLengths.end(), [](const double len) { return len < 0.05; }),
+		featureVector.chainLengths.end()
+	);
 
 	return featureVector;
 }
