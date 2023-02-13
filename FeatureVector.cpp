@@ -11,6 +11,11 @@ FeatureVector::FeatureVector(const std::vector<Chain>& chains) {
 	}
 }
 
+FeatureVector::FeatureVector(const std::vector<double>& distances) {
+	chainLengths = distances;
+}
+
+
 bool FeatureVector::writeToFile(const std::string& fileName, const std::string& path) {
 	std::ofstream out(path + fileName);
 

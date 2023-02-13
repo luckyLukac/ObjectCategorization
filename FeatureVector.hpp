@@ -21,6 +21,12 @@ struct FeatureVector {
 	FeatureVector(const std::vector<Chain>& chains);
 
 	/// <summary>
+	/// Constructor of the feature vector with given distances.
+	/// </summary>
+	/// <param name="chains">: vector of distances</param>
+	FeatureVector(const std::vector<double>& distances);
+
+	/// <summary>
 	/// Output of the feature vector into a file.
 	/// </summary>
 	/// <param name="fileName">: desired name of the created file</param>

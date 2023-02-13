@@ -240,7 +240,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 	wxClientDC dc(drawWindow);
 
 	const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine, true);  // Finding edge pixels on the rasterized line.
-	const int vicinity = 3;
+	const int vicinity = 10;
 
 	std::vector<Pixel> currentEdgePixels;
 
@@ -283,10 +283,6 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 				int xjuad = 5;
 			}
 
-			if (pixelField[midPixel.y][midPixel.x].position != Position::inside && edgePixels.size() < previousEdgePixels.size()) {
-				continue;
-			}
-
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
 				newChain.angle = toDegrees(sweepAngle);
@@ -296,7 +292,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 			else {
 				Pixel previousMidPixel;
 				std::vector<Chain>::iterator it = chains.end();
-				for (uint count2 = 1; count2 < previousActualEdgePixels.size(); count2 += 2) {
+				for (uint count2 = 1; count2 < previousActualEdgePixels.size(); count2 += 1) {
 					previousMidPixel = (previousActualEdgePixels[count2 - 1] + previousActualEdgePixels[count2]) / 2.0;
 
 					it = std::find_if(chains.begin(), chains.end(), [this, &previousMidPixel, &midPixel](const Chain& chain) {
@@ -319,9 +315,13 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 					chains.push_back(newChain);
 				}
 				else {
+					count += 1;
+					if (pixelField[midPixel.y][midPixel.x].position != Position::inside) {
+						continue;
+					}
+
 					it->pixels.push_back(midPixel);
 					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
-					count += 2;
 				}
 			}
 		}
@@ -745,49 +745,63 @@ void LineSweeping::sweep() {
 
 // Calculation of a feature vector.
 FeatureVector LineSweeping::calculateFeatureVector() {
-	std::sort(chains.begin(), chains.end(), [](const Chain& chain1, const Chain& chain2) { return chain1.pixels.size() > chain2.pixels.size(); });
-	const double maxLength = chains[0].totalLength();
-	chains.erase(std::remove_if(chains.begin(), chains.end(), [maxLength](const Chain& chain) { return (chain.totalLength() / maxLength) < 0.2; }), chains.end());
-
-	std::vector<Chain> chainVector(chains);  // Feature vector of the object.
-
-	// Sorting the feature vector according to the chain lengths.
-	std::sort(
-		chainVector.begin(),
-		chainVector.end(),
-		[](const Chain& s1, const Chain& s2) {
-			return s1.pixels.size() > s2.pixels.size();
-		}
-	);
-
-	// Creating a feature vector.
-	FeatureVector featureVector(chainVector);
-
-	// Sorting the feature vector according to the chain lengths.
-	std::sort(
-		featureVector.chainLengths.begin(),
-		featureVector.chainLengths.end(),
-		[](const double s1, const double s2) {
-			return s1 > s2;
-		}
-	);
-
-	if (!featureVector.chainLengths.empty()) {
-		const double maxLen = featureVector.chainLengths[0];
-		std::transform(
-			featureVector.chainLengths.begin(),
-			featureVector.chainLengths.end(),
-			featureVector.chainLengths.begin(),
-			[&maxLen](double d) {
-				return d / maxLen;
-			}
-		);
+	std::vector<double> distances(chains.size());
+	for (int i = 0; i < chains.size(); i++) {
+		distances[i] = distance(chains[i].pixels.front(), chains[i].pixels.back());
 	}
 
-	featureVector.chainLengths.erase(
-		std::remove_if(featureVector.chainLengths.begin(), featureVector.chainLengths.end(), [](const double len) { return len < 0.05; }),
-		featureVector.chainLengths.end()
-	);
+	std::sort(distances.begin(), distances.end());
+	std::reverse(distances.begin(), distances.end());
+	const double maxLength = distances[0];
+	for (int i = 0; i < distances.size(); i++) {
+		distances[i] /= maxLength;
+	}
+	distances.erase(std::remove_if(distances.begin(), distances.end(), [](const double distance) { return distance < 0.2; }), distances.end());
+
+
+	//std::sort(chains.begin(), chains.end(), [](const Chain& chain1, const Chain& chain2) { return chain1.pixels.size() > chain2.pixels.size(); });
+	//const double maxLength = chains[0].totalLength();
+	//chains.erase(std::remove_if(chains.begin(), chains.end(), [maxLength](const Chain& chain) { return (chain.totalLength() / maxLength) < 0.2; }), chains.end());
+
+	//std::vector<Chain> chainVector(chains);  // Feature vector of the object.
+
+	//// Sorting the feature vector according to the chain lengths.
+	//std::sort(
+	//	chainVector.begin(),
+	//	chainVector.end(),
+	//	[](const Chain& s1, const Chain& s2) {
+	//		return s1.pixels.size() > s2.pixels.size();
+	//	}
+	//);
+
+	//// Creating a feature vector.
+	FeatureVector featureVector(distances);
+
+	//// Sorting the feature vector according to the chain lengths.
+	//std::sort(
+	//	featureVector.chainLengths.begin(),
+	//	featureVector.chainLengths.end(),
+	//	[](const double s1, const double s2) {
+	//		return s1 > s2;
+	//	}
+	//);
+
+	//if (!featureVector.chainLengths.empty()) {
+	//	const double maxLen = featureVector.chainLengths[0];
+	//	std::transform(
+	//		featureVector.chainLengths.begin(),
+	//		featureVector.chainLengths.end(),
+	//		featureVector.chainLengths.begin(),
+	//		[&maxLen](double d) {
+	//			return d / maxLen;
+	//		}
+	//	);
+	//}
+
+	//featureVector.chainLengths.erase(
+	//	std::remove_if(featureVector.chainLengths.begin(), featureVector.chainLengths.end(), [](const double len) { return len < 0.05; }),
+	//	featureVector.chainLengths.end()
+	//);
 
 	return featureVector;
 }
