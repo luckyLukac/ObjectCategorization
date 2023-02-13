@@ -136,8 +136,8 @@ MainWindow::MainWindow() :
 
 void MainWindow::selectChainCode(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	//wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\F8 Datasets\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-	wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\F8 Datasets\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\F8 Datasets\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	//wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\F8 Datasets\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
@@ -145,8 +145,8 @@ void MainWindow::selectChainCode(wxCommandEvent& event) {
 	}
 
 	std::string file = fd.GetPath().ToStdString();
-	//const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
-	const std::string replacement = "C:\\Luka";
+	const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
+	//const std::string replacement = "C:\\Luka";
 	file.replace(file.find(replacement), replacement.size(), ".");
 
 	tbxChainCodeLoading->SetValue(file);
@@ -179,7 +179,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.fillShape();						  // Filling the object.
 
 	// Sweeping the object.
-	for (int i = 0; i <= 90; i += 90) {
+	for (int i = 45; i <= 45; i += 45) {
 		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		sweep.sweep();						      // Sweeping the object with the sweep line.
 	}
@@ -201,8 +201,8 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 
 void MainWindow::selectFirstObjectResult(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	//wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-	wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	//wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
@@ -210,8 +210,8 @@ void MainWindow::selectFirstObjectResult(wxCommandEvent& event) {
 	}
 
 	std::string file = fd.GetPath().ToStdString();
-	//const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
-	const std::string replacement = "C:\\Luka";
+	const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
+	//const std::string replacement = "C:\\Luka";
 	file.replace(file.find(replacement), replacement.size(), ".");
 
 	tbxObjectComparisonFile1->SetValue(file);
@@ -219,8 +219,8 @@ void MainWindow::selectFirstObjectResult(wxCommandEvent& event) {
 
 void MainWindow::selectSecondObjectResult(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
-	//wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-	wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	//wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
@@ -228,8 +228,8 @@ void MainWindow::selectSecondObjectResult(wxCommandEvent& event) {
 	}
 
 	std::string file = fd.GetPath().ToStdString();
-	//const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
-	const std::string replacement = "C:\\Luka";
+	const std::string replacement = "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization";
+	//const std::string replacement = "C:\\Luka";
 	file.replace(file.find(replacement), replacement.size(), ".");
 
 	tbxObjectComparisonFile2->SetValue(file);

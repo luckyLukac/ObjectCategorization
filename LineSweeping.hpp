@@ -59,5 +59,5 @@ public:
 	bool readFileF8(std::string file, const uint rotation = 0);		// Reading an F4 chain code file.
 	void fillShape();												// Filling the loaded shape.
 	void sweep();													// Sweeping the object.
-	FeatureVector calculateFeatureVector() const;				    // Calculation of a feature vector.
+	FeatureVector calculateFeatureVector();				            // Calculation of a feature vector.
 };
