@@ -7,7 +7,7 @@ ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const P
 	clockwise(clockwise),
 	startPoint(startPoint)
 {
-	const uint scale = 2;
+	const uint scale = 1;
 
 	// Reading the chain code character by character.
 	for (const char& ch : chainCode) {

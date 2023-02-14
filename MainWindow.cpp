@@ -179,17 +179,26 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.fillShape();						  // Filling the object.
 
 	// Sweeping the object.
-//#pragma omp parallel for
+	std::vector<LineSweeping> sweepVector(4);
+#pragma omp parallel for
 	for (int i = 0; i < 180; i += 45) {
-		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
-		sweep.sweep();						      // Sweeping the object with the sweep line.
+		LineSweeping currentSweep = sweep;
+		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
+		currentSweep.sweep();						      // Sweeping the object with the sweep line.
+		sweepVector[static_cast<int>(i / 45)] = currentSweep;
 	}
 
 	auto end = std::chrono::steady_clock::now();
 
 	const std::string filename = tbxMultisweepOutput->GetValue().ToStdString();
-	FeatureVector featureVector = sweep.calculateFeatureVector();  // Calculation of a feature vector for the current object.
+	FeatureVector featureVector = calculateFeatureVector(sweepVector);  // Calculation of a feature vector for the current object.
 	featureVector.writeToFile(filename + ".txt", "./Results/");
+
+	for (uint i = 0; i < sweepVector.size(); i++) {
+		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
+			sweep.chains.push_back(sweepVector[i].chains[j]);
+		}
+	}
 
 	image->setSegmentFlag();
 	image->Refresh(false);

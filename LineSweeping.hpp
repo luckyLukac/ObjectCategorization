@@ -3,6 +3,7 @@
 #include <queue>
 #include <vector>
 
+#include "HelperFunctions.hpp"
 #include "ChainCode.hpp"
 #include "FeatureVector.hpp"
 #include "Pixel.hpp"
@@ -60,3 +61,5 @@ public:
 	void sweep();													// Sweeping the object.
 	FeatureVector calculateFeatureVector();				            // Calculation of a feature vector.
 };
+
+FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVector);

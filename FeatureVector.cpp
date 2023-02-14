@@ -3,7 +3,6 @@
 #include "FeatureVector.hpp"
 
 
-
 FeatureVector::FeatureVector(const std::vector<Chain>& chains) {
 	chainLengths = std::vector<double>(chains.size());
 	for (uint i = 0; i < chains.size(); i++) {

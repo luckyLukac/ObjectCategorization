@@ -812,3 +812,26 @@ FeatureVector LineSweeping::calculateFeatureVector() {
 
 	return featureVector;
 }
+
+
+FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVector) {
+	std::vector<double> distances;
+	for (uint i = 0; i < sweepVector.size(); i++) {
+		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
+			distances.push_back(distance(sweepVector[i].chains[j].pixels.front(), sweepVector[i].chains[j].pixels.back()));
+		}
+	}
+
+	std::sort(distances.begin(), distances.end());
+	std::reverse(distances.begin(), distances.end());
+	const double maxLength = distances[0];
+	for (uint i = 0; i < distances.size(); i++) {
+		distances[i] /= maxLength;
+	}
+	distances.erase(std::remove_if(distances.begin(), distances.end(), [](const double distance) { return distance < 0.2; }), distances.end());
+
+	// Creating a feature vector.
+	FeatureVector featureVector(distances);
+
+	return featureVector;
+}
