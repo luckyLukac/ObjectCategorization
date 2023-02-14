@@ -3,33 +3,41 @@
 #include "ChainCode.hpp"
 
 
-ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation) :
+ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation, const bool isF4) :
 	clockwise(clockwise),
 	startPoint(startPoint)
 {
+	const uint scale = 2;
+
 	// Reading the chain code character by character.
 	for (const char& ch : chainCode) {
-		// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
-		if (ch == '0' || ch == '2' || ch == '4' || ch == '6') {
-			//for (int i = 0; i < 1; i++) {
-			code.push_back(((ch - '0') + rotation) % 8);
-			//}
-		}
-		else if (ch == '1') {
-			code.push_back((('0' - '0') + rotation) % 8);
-			code.push_back((('2' - '0') + rotation) % 8);
-		}
-		else if (ch == '3') {
-			code.push_back((('2' - '0') + rotation) % 8);
-			code.push_back((('4' - '0') + rotation) % 8);
-		}
-		else if (ch == '5') {
-			code.push_back((('4' - '0') + rotation) % 8);
-			code.push_back((('6' - '0') + rotation) % 8);
-		}
-		else if (ch == '7') {
-			code.push_back((('6' - '0') + rotation) % 8);
-			code.push_back((('0' - '0') + rotation) % 8);
+		for (uint i = 0; i < scale; i++) {
+			uint order = ch - '0';
+			if (isF4) {
+				order *= 2;
+			}
+			order = (order + rotation) % 8;
+		
+			// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
+			if (order == 0 || order == 2 || order == 4 || order == 6) {
+				code.push_back(order);
+			}
+			else if (order == 1) {
+				code.push_back(0);
+				code.push_back(2);
+			}
+			else if (order == 3) {
+				code.push_back(2);
+				code.push_back(4);
+			}
+			else if (order == 5) {
+				code.push_back(4);
+				code.push_back(6);
+			}
+			else if (order == 7) {
+				code.push_back(6);
+				code.push_back(0);
+			}
 		}
 	}
 

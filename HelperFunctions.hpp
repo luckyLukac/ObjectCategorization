@@ -94,7 +94,7 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 /// </summary>
 /// <param name="point">: point to be rotated</param>
 /// <param name="referencePoint">: reference point for the rotation</param>
-/// <param name="angle">: angle of the rotation</param>
+/// <param name="angle">: angle of the rotation in radians</param>
 /// <returns>rotated pixel</returns>
 Pixel rotate2D(const Pixel& point, const Pixel& referencePoint, const double angle);
 

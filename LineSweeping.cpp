@@ -279,7 +279,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			if (sweepAngle == 0 && midPixel.y == 126) {
+			if (midPixel.x == 224 && midPixel.y == 228) {
 				int xjuad = 5;
 			}
 
@@ -401,8 +401,8 @@ Pixel LineSweeping::chainCodeMovePixel(const Pixel& currentPixel, const short di
 // Plotting the F4 chain code as an image.
 void LineSweeping::plotInput(wxDC& dc) const {
 	// Setting the color to green.
-	const wxPen pen(*wxGREEN_PEN);
-	const wxBrush brush(*wxGREEN_BRUSH);
+	const wxPen pen(*wxBLACK_PEN);
+	const wxBrush brush(*wxBLACK_BRUSH);
 
 	// Plotting each point as a pixel.
 	for (const Pixel& point : coordinates) {
@@ -427,7 +427,7 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 	}
 }
 
-std::vector<std::string> colors({ "red", "cyan", "pink", "yellow", "purple", "green", "blue", "brown", "black", "magenta", "cyan", "lime", "olive", "teal"});
+std::vector<std::string> colors({ "red", "blue", "green" });
 
 // Plotting the segments.
 void LineSweeping::plotChains(wxDC& dc) const {
@@ -498,7 +498,12 @@ bool LineSweeping::readFileF8(std::string file, const uint rotation) {
 	int startY = 0;
 
 	std::string value;
+	bool isF4 = false;
 	while (std::getline(in, value, ';')) {
+		if (value == "F4") {
+			isF4 = true;
+		}
+
 		// Reading clockwise or anti-clockwise orientation.
 		std::getline(in, value, ';');
 		if (value == "CW") {
@@ -514,10 +519,12 @@ bool LineSweeping::readFileF8(std::string file, const uint rotation) {
 		std::getline(in, value, ';');
 		startY = -std::stoi(value);
 		std::getline(in, value, ';');
+		Pixel startPixel(startX, startY);
+		startPixel = rotate2D(startPixel, Pixel(0, 0), rotation * (PI / 4));
 
 		// Adding a new chain code.
 		std::getline(in, value);
-		ChainCode chainCode(value, clockwise, Pixel(startX, startY, Position::undefined), rotation);
+		ChainCode chainCode(value, clockwise, startPixel, rotation, isF4);
 		chainCodes.push_back(chainCode);
 	}
 
@@ -746,14 +753,14 @@ void LineSweeping::sweep() {
 // Calculation of a feature vector.
 FeatureVector LineSweeping::calculateFeatureVector() {
 	std::vector<double> distances(chains.size());
-	for (int i = 0; i < chains.size(); i++) {
+	for (uint i = 0; i < chains.size(); i++) {
 		distances[i] = distance(chains[i].pixels.front(), chains[i].pixels.back());
 	}
 
 	std::sort(distances.begin(), distances.end());
 	std::reverse(distances.begin(), distances.end());
 	const double maxLength = distances[0];
-	for (int i = 0; i < distances.size(); i++) {
+	for (uint i = 0; i < distances.size(); i++) {
 		distances[i] /= maxLength;
 	}
 	distances.erase(std::remove_if(distances.begin(), distances.end(), [](const double distance) { return distance < 0.2; }), distances.end());

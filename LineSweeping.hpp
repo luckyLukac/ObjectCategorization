@@ -41,7 +41,6 @@ public:
 	bool isEdgePixelInVicinity(const uint vicinity, const Pixel& currentPixel, const Pixel& targetPixel);																		   // Checking whether a target pixel is in the vicinity of the current pixel on the object edge.
 	Pixel chainCodeMovePixel(const Pixel& currentPixel, const short direction);																									   // Obtaining a new pixel after chain code move.
 
-
 public:
 	// PLOT METHODS
 	void plotInput(wxDC& dc) const;													   // Plotting the F4 chain code as an image.

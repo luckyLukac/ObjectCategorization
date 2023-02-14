@@ -234,7 +234,7 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 		currentPixel != Pixel(endPoint.x + 1, endPoint.y + 1)
 	)
 	{
-		if (currentPixel.x >= pixelField.size() || currentPixel.y >= pixelField.size()) {
+		if (currentPixel.x >= static_cast<int>(pixelField.size()) || currentPixel.y >= static_cast<int>(pixelField.size())) {
 			break;
 		}
 

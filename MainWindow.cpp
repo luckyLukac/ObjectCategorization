@@ -179,7 +179,8 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.fillShape();						  // Filling the object.
 
 	// Sweeping the object.
-	for (int i = 0; i <= 179; i += 45) {
+//#pragma omp parallel for
+	for (int i = 0; i < 180; i += 45) {
 		sweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		sweep.sweep();						      // Sweeping the object with the sweep line.
 	}
