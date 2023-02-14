@@ -427,14 +427,18 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 	}
 }
 
-std::vector<std::string> colors({ "red", "blue", "green" });
+std::vector<wxColor> colors({ wxColor(255, 0, 0), wxColour(34, 139, 34), wxColor(0, 0, 255), wxColor(255, 140, 80), wxColor(255, 0, 255), });
 
 // Plotting the segments.
 void LineSweeping::plotChains(wxDC& dc) const {
 	uint color = 0;
 	for (const Chain& chain : chains) {
-		dc.SetPen(wxPen(wxColor(colors[color]), 2));
+		dc.SetPen(wxPen(colors[color], 2));
 		
+		if (chain.pixels.size() < 10) {
+			continue;
+		}
+
 		for (uint i = 1; i < chain.pixels.size(); i++) {
 			dc.DrawLine(chain.pixels[i - 1].x * plotRatio, (maxCoordinate - chain.pixels[i - 1].y) * plotRatio, chain.pixels[i].x * plotRatio, (maxCoordinate - chain.pixels[i].y) * plotRatio);
 		}
