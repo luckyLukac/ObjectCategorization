@@ -75,7 +75,6 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 /// <returns>list of pixels of the rasterized line segment</returns>
 std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField);
 
-
 /// <summary>
 /// Cleary-Wyvill rasterization algorithm.
 /// </summary>
@@ -86,6 +85,14 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 /// <returns>list of pixels of the rasterized line segment</returns>
 std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField, const double angleOfRotation);
 
+/// <summary>
+/// Edge pixel detection using Bresenham rasterization algorithm.
+/// </summary>
+/// <param name="startPoint">: start pixel of the line segment</param>
+/// <param name="endPoint">: end pixel of the line segment</param>
+/// <param name="pixelField">: pixel field of the rasterized scene with an object</param>
+/// <returns>list of edge pixels</returns>
+std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField);
 
 
 // ROTATION FUNCTIONS

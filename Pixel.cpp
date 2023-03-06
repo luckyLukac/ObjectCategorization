@@ -8,7 +8,7 @@ Pixel::Pixel() :
 	directionNext(-1)
 {}
 
-Pixel::Pixel(const int x, const int y, const Position& position, const short directionPrevious, const short directionNext) :
+Pixel::Pixel(const double x, const double y, const Position& position, const short directionPrevious, const short directionNext) :
 	x(x),
 	y(y),
 	position(position),
@@ -27,5 +27,5 @@ Pixel Pixel::operator + (const Pixel& pixel) const {
 }
 
 Pixel Pixel::operator / (const double factor) const {
-	return Pixel(static_cast<int>(x / factor), static_cast<int>(y / factor));
+	return Pixel(x / factor, y / factor);
 }

@@ -153,6 +153,8 @@ void MainWindow::selectChainCode(wxCommandEvent& event) {
 }
 
 void MainWindow::loadF8(wxCommandEvent& event) {
+	//findEdgePixelsWithBresenham(Pixel(0, 0), Pixel(5, 10), PixelField(50, std::vector<Pixel>(50)));
+
 	// Reading a file with the F8 chain code.
 	std::string file = tbxChainCodeLoading->GetValue().ToStdString();
 	const uint rotation = sbxChainCodeLoadingRotation->GetValue();
@@ -181,14 +183,15 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	auto endFill = std::chrono::steady_clock::now();
 
 	// Sweeping the object.
-	std::vector<LineSweeping> sweepVector(4);
+	std::vector<LineSweeping> sweepVector(12);
 	
-	#pragma omp parallel for
-	for (int i = 0; i < 180; i += 45) {
+	//#pragma omp parallel for
+	const uint step = 15;
+	for (int i = 15; i < 16; i += step) {
 		LineSweeping currentSweep = sweep;
 		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		currentSweep.sweep();						      // Sweeping the object with the sweep line.
-		sweepVector[static_cast<int>(i / 45)] = currentSweep;
+		sweepVector[static_cast<int>(i / step)] = currentSweep;
 	}
 
 	auto end = std::chrono::steady_clock::now();

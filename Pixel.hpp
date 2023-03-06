@@ -14,14 +14,14 @@ enum class Position {
 
 // Point struct.
 struct Pixel {
-	int x;
-	int y;
+	double x;
+	double y;
 	Position position;
 	short directionPrevious;
 	short directionNext;
 
 	Pixel();
-	Pixel(const int x, const int y, const Position& position = Position::undefined, const short directionPrevious = -1, const short directionNext = -1);
+	Pixel(const double x, const double y, const Position& position = Position::undefined, const short directionPrevious = -1, const short directionNext = -1);
 
 	bool operator == (const Pixel& pixel) const;
 	Pixel operator + (const Pixel& pixel) const;
