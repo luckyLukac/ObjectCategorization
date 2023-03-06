@@ -13,6 +13,7 @@
 struct ChainCode {
 	std::vector<short> code;  // Sequence of chain code commands.
 	bool clockwise;			  // Clockwise orientation (true or false).
+	short scale = 1;
 	Pixel startPoint;	      // Start point of the object.
 
 	/// <summary>

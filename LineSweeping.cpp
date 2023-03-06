@@ -21,8 +21,8 @@ void LineSweeping::calculateCoordinatesFromChainCode() {
 	// Adding new coordinates according to the chain code.
 	for (const ChainCode& chainCode : chainCodes) {
 		// Setting the start point.
-		currentX = chainCode.startPoint.x;
-		currentY = chainCode.startPoint.y;
+		currentX = chainCode.startPoint.x * chainCode.scale;
+		currentY = chainCode.startPoint.y * chainCode.scale;
 		point.x = currentX;
 		point.y = currentY;
 		point.directionNext = chainCode.code.front();
@@ -240,7 +240,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 	wxClientDC dc(drawWindow);
 
 	const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine, true);  // Finding edge pixels on the rasterized line.
-	const int vicinity = 10;
+	const int vicinity = chainCodes[0].scale * 10;
 
 	std::vector<Pixel> currentEdgePixels;
 
@@ -279,10 +279,6 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			if (midPixel.x == 224 && midPixel.y == 228) {
-				int xjuad = 5;
-			}
-
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
 				newChain.angle = toDegrees(sweepAngle);
@@ -303,12 +299,12 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 						return distance(chain.pixels.back(), previousMidPixel) < 2 && isInTolerance(toRadians(chain.angle), sweepAngle);
 					});
 
-					if (it != chains.end() && distance(previousMidPixel, midPixel) < 10) {
+					if (it != chains.end() && distance(previousMidPixel, midPixel) < vicinity) {
 						break;
 					}
 				}
 
-				if (it == chains.end() || distance(previousMidPixel, midPixel) > 10) {
+				if (it == chains.end() || distance(previousMidPixel, midPixel) > vicinity) {
 					Chain newChain;
 					newChain.angle = toDegrees(sweepAngle);
 					newChain.pixels.push_back(midPixel);
@@ -321,7 +317,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& rasterizedLi
 					}
 
 					it->pixels.push_back(midPixel);
-					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+					//dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
 				}
 			}
 		}
@@ -428,16 +424,17 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 }
 
 std::vector<wxColor> colors({
-	wxColor(255,   0,   0),  // Red
-	wxColor(  0,   0, 255),  // Blue
-	wxColor( 34, 139,  34),  // Green
-	wxColor(255, 140,  80),  // Orange
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(  0,   0, 255),  // Blue (45°)
+	wxColor(34, 139,  34),  // Green (90°)
+	wxColor(255,  0,  255),  // Magenta (135°)
+	//wxColor(255, 140,  80),  // Orange (135°)
 });
 
 // Plotting the segments.
 void LineSweeping::plotChains(wxDC& dc) const {
 	for (const Chain& chain : chains) {
-		const uint index = static_cast<uint>(chain.angle / 45);
+		const uint index = static_cast<uint>((chain.angle + 1.0) / 45);
 		dc.SetPen(wxPen(colors[index], 2));
 		
 		if (chain.pixels.size() < 10) {

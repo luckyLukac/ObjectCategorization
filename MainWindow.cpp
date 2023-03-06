@@ -178,9 +178,12 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	sweep.clearSegments();				      // Clearing potential previously calculated segments.
 	sweep.fillShape();						  // Filling the object.
 
+	auto endFill = std::chrono::steady_clock::now();
+
 	// Sweeping the object.
 	std::vector<LineSweeping> sweepVector(4);
-#pragma omp parallel for
+	
+	#pragma omp parallel for
 	for (int i = 0; i < 180; i += 45) {
 		LineSweeping currentSweep = sweep;
 		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
@@ -203,8 +206,12 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	image->setSegmentFlag();
 	image->Refresh(false);
 
+	u128 timeFill = std::chrono::duration_cast<std::chrono::milliseconds>(endFill - start).count();
+	u128 timeOther = std::chrono::duration_cast<std::chrono::milliseconds>(end - endFill).count();
 	u128 time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	std::stringstream ss;
+	ss << "Time (fill): " << timeFill << " ms\n";
+	ss << "Time (sweep): " << timeOther << " ms\n";
 	ss << "Time: " << time << " ms";
 	wxMessageBox(ss.str(), "", wxOK);
 }
@@ -279,8 +286,13 @@ void MainWindow::compareResults(wxCommandEvent& event) {
 	std::vector<double> chain1((std::istream_iterator<double>(if1)), std::istream_iterator<double>());
 	std::vector<double> chain2((std::istream_iterator<double>(if2)), std::istream_iterator<double>());
 
-	for (uint i = 0; i < static_cast<uint>(0.7 * chain1.size()); i++) {
-		if (difference(chain1[i], chain2[i]) > 0.06) {
+	if (difference(chain1.size(), chain2.size()) > 4) {
+		wxMessageBox("NO", "", wxOK);
+		return;
+	}
+
+	for (uint i = 0; i < static_cast<uint>(std::round(0.7 * chain1.size())); i++) {
+		if (difference(chain1[i], chain2[i]) > 0.1) {
 			wxMessageBox("NO", "", wxOK);
 			return;
 		}
