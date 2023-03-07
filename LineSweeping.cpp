@@ -316,7 +316,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 					}
 
 					it->pixels.push_back(midPixel);
+					dc.SetPen(*wxRED_PEN);
 					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+					dc.SetPen(*wxBLACK_PEN);
 				}
 			}
 		}
@@ -718,6 +720,8 @@ void LineSweeping::sweep() {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, sweepAngle, maxCoordinate);
+				dc.DrawLine(startPoint.x * plotRatio, (maxCoordinate - startPoint.y) * plotRatio, endPoint.x * plotRatio, (maxCoordinate - endPoint.y) * plotRatio);
+
 				std::vector<Pixel> edgePixels = findEdgePixelsWithBresenham(startPoint, endPoint, pixelField);
 				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.

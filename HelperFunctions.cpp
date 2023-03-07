@@ -259,21 +259,23 @@ std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pi
 	// Calculating the difference between the both coordinates.
 	const double deltaX = endPoint.x - startPoint.x;
 	const double deltaY = endPoint.y - startPoint.y;
+	const short signX = deltaX >= 0 ? 1 : -1;
+	const short signY = deltaY >= 0 ? 1 : -1;
 	const double coefficient = deltaY / deltaX;
 
 	// Starting X and Y coordinates.
 	double x = startPoint.x;
 	double y = startPoint.y;
-	double error;
+	double error = deltaY / deltaX;
 
-	if (deltaX >= deltaY) {
+	if (std::abs(deltaX) >= std::abs(deltaY)) {
 		// Calculating the current error.
 		error = deltaY / deltaX;
 
 		for (int i = 0; i <= std::abs(deltaX); i++) {
 			// Adding the new pixel to the vector.
 			const int pixelY = static_cast<int>(y + (error - coefficient));
-			if (x >= 0 && x < pixelField.size() && pixelY >= 0 && pixelY < pixelField.size() && pixelField[pixelY][x].position == Position::edge) {
+			if (x >= 0 && x < pixelField.size() && pixelY >= 0 && pixelY < pixelField.size()/* && pixelField[pixelY][x].position == Position::edge*/) {
 				pixels.push_back(Pixel(x, y + (error - coefficient), pixelField[pixelY][x].position, pixelField[pixelY][x].directionPrevious, pixelField[pixelY][x].directionNext));
 			}
 
@@ -282,9 +284,13 @@ std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pi
 				error -= 1;
 				y += 1;
 			}
+			else if (error < -0.5) {
+				error += 1;
+				y -= signY;
+			}
 
 			error += coefficient;
-			x += 1;
+			x += signX;
 		}
 	}
 	else {
@@ -294,7 +300,7 @@ std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pi
 		for (int i = 0; i <= std::abs(deltaY); i++) {
 			// Adding the new pixel to the vector.
 			const int pixelX = static_cast<int>(x + (1 / coefficient - error));
-			if (pixelX < pixelField.size() && y < pixelField.size() && pixelField[y][pixelX].position == Position::edge) {
+			if (pixelX < pixelField.size() && y < pixelField.size() /*&& pixelField[y][pixelX].position == Position::edge*/) {
 				pixels.push_back(Pixel(x + (1 / coefficient - error), y, pixelField[y][pixelX].position, pixelField[y][pixelX].directionPrevious, pixelField[y][pixelX].directionNext));
 			}
 
@@ -303,9 +309,13 @@ std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pi
 				error += 1;
 				x += 1;
 			}
+			else if (error > 0.5) {
+				error -= 1;
+				x += signX;
+			}
 
-			error -= (1 / coefficient);
-			y += 1;
+			error += (1 / coefficient);
+			y += signY;
 		}
 	}
 
