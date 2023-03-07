@@ -181,14 +181,14 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	auto endFill = std::chrono::steady_clock::now();
 
 	// Sweeping the object.
-	std::vector<LineSweeping> sweepVector(4);
+	std::vector<LineSweeping> sweepVector(12);
 	
 	#pragma omp parallel for
-	for (int i = 0; i < 180; i += 45) {
+	for (int i = 0; i < 180; i += 15) {
 		LineSweeping currentSweep = sweep;
 		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		currentSweep.sweep();						      // Sweeping the object with the sweep line.
-		sweepVector[static_cast<int>(i / 45)] = currentSweep;
+		sweepVector[static_cast<int>(i / 15)] = currentSweep;
 	}
 
 	auto end = std::chrono::steady_clock::now();
