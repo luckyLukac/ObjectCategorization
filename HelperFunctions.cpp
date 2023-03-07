@@ -272,8 +272,9 @@ std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pi
 
 		for (int i = 0; i <= std::abs(deltaX); i++) {
 			// Adding the new pixel to the vector.
-			if (x >= 0 && x < pixelField.size() && y >= 0 && y < pixelField.size() /*&& pixelField[y][x].position == Position::edge*/) {
-				pixels.push_back(Pixel(x, y + (error - coefficient), pixelField[y][x].position, pixelField[y][x].directionPrevious, pixelField[y][x].directionNext));
+			const int pixelY = static_cast<int>(y + (error - coefficient));
+			if (x >= 0 && x < pixelField.size() && pixelY >= 0 && pixelY < pixelField.size() && pixelField[pixelY][x].position == Position::edge) {
+				pixels.push_back(Pixel(x, y + (error - coefficient), pixelField[pixelY][x].position, pixelField[pixelY][x].directionPrevious, pixelField[pixelY][x].directionNext));
 			}
 
 			// Adding the correct values to X and Y coordinates.
@@ -292,8 +293,9 @@ std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pi
 
 		for (int i = 0; i <= std::abs(deltaY); i++) {
 			// Adding the new pixel to the vector.
-			if (x < pixelField.size() && y < pixelField.size() /*&& pixelField[y][x].position == Position::edge*/) {
-				pixels.push_back(Pixel(x + (1 / coefficient - error), y, pixelField[y][x].position, pixelField[y][x].directionPrevious, pixelField[y][x].directionNext));
+			const int pixelX = static_cast<int>(x + (1 / coefficient - error));
+			if (pixelX < pixelField.size() && y < pixelField.size() && pixelField[y][pixelX].position == Position::edge) {
+				pixels.push_back(Pixel(x + (1 / coefficient - error), y, pixelField[y][pixelX].position, pixelField[y][pixelX].directionPrevious, pixelField[y][pixelX].directionNext));
 			}
 
 			// Adding the correct values to X and Y coordinates.

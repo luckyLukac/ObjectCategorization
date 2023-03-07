@@ -246,7 +246,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 	// Finding matching pixels on the edge.
 	for (const Pixel& currentEdgePixel : edgePixels) {
 		for (const Pixel& previousEdgePixel : previousEdgePixels) {
-			if (isEdgePixelInVicinity(vicinity, currentEdgePixel, previousEdgePixel)) {
+			if (isEdgePixelInVicinity(vicinity, currentEdgePixel.floor(), previousEdgePixel.floor())) {
 				currentEdgePixels.push_back(currentEdgePixel);
 				break;
 			}
@@ -722,7 +722,9 @@ void LineSweeping::sweep() {
 				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
 				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
-				buildChainsIteratively(edgePixels);  // Iterative chain building.
+				if (!edgePixels.empty()) {
+					buildChainsIteratively(edgePixels);  // Iterative chain building.
+				}
 			}
 			for (int x = 0; x < maxCoordinate; x += 1) {
 				// Bresenham rasterization algorithm.

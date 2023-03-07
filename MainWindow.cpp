@@ -153,7 +153,7 @@ void MainWindow::selectChainCode(wxCommandEvent& event) {
 }
 
 void MainWindow::loadF8(wxCommandEvent& event) {
-	//findEdgePixelsWithBresenham(Pixel(0, 0), Pixel(5, 10), PixelField(50, std::vector<Pixel>(50)));
+	//findEdgePixelsWithBresenham(Pixel(0, 5), Pixel(10, 0), PixelField(50, std::vector<Pixel>(50)));
 
 	// Reading a file with the F8 chain code.
 	std::string file = tbxChainCodeLoading->GetValue().ToStdString();
@@ -187,7 +187,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	
 	//#pragma omp parallel for
 	const uint step = 15;
-	for (int i = 15; i < 16; i += step) {
+	for (int i = 60; i < 67; i += step) {
 		LineSweeping currentSweep = sweep;
 		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		currentSweep.sweep();						      // Sweeping the object with the sweep line.

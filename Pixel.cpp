@@ -1,4 +1,7 @@
+#include <cmath>
+
 #include "Pixel.hpp"
+
 
 Pixel::Pixel() :
 	x(0),
@@ -28,4 +31,13 @@ Pixel Pixel::operator + (const Pixel& pixel) const {
 
 Pixel Pixel::operator / (const double factor) const {
 	return Pixel(x / factor, y / factor);
+}
+
+
+Pixel Pixel::floor() const {
+	Pixel pixel = *this;
+	pixel.x = std::floor(pixel.x);
+	pixel.y = std::floor(pixel.y);
+
+	return pixel;
 }

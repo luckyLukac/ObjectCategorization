@@ -26,6 +26,8 @@ struct Pixel {
 	bool operator == (const Pixel& pixel) const;
 	Pixel operator + (const Pixel& pixel) const;
 	Pixel operator / (const double factor) const;
+
+	Pixel floor() const;
 };
 
 
