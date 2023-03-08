@@ -278,6 +278,10 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
+			if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 2.1) {
+				continue;
+			}
+
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
 				newChain.angle = toDegrees(sweepAngle);
@@ -295,7 +299,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 							return false;
 						}
 
-						return distance(chain.pixels.back(), previousMidPixel) < 2 * chainCodes[0].scale && isInTolerance(toRadians(chain.angle), sweepAngle);
+						return distance(chain.pixels.back(), previousMidPixel) < 10 && isInTolerance(toRadians(chain.angle), sweepAngle);
 					});
 
 					if (it != chains.end() && distance(previousMidPixel, midPixel) < vicinity) {
@@ -484,7 +488,7 @@ void LineSweeping::setAngleOfRotation(const double angle) {
 
 // PUBLIC METHODS
 // Reading an F4 chain code file.
-bool LineSweeping::readFileF8(std::string file, const uint rotation) {
+bool LineSweeping::readFileF8(std::string file, const uint rotation, const uint scale) {
 	// Opening a file.
 	std::ifstream in(file);
 
@@ -538,7 +542,7 @@ bool LineSweeping::readFileF8(std::string file, const uint rotation) {
 
 		// Adding a new chain code.
 		std::getline(in, value);
-		ChainCode chainCode(value, clockwise, startPixel, rotation, isF4);
+		ChainCode chainCode(value, clockwise, startPixel, rotation, scale, isF4);
 		chainCodes.push_back(chainCode);
 	}
 

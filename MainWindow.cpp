@@ -135,7 +135,7 @@ MainWindow::MainWindow() :
 	lblObjectComparisonFile1->Wrap(-1);
 	lytObjectComparisonFile1->Add(lblObjectComparisonFile1, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-	tbxObjectComparisonFile1 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./test1.txt"), wxDefaultPosition, wxDefaultSize, 0);
+	tbxObjectComparisonFile1 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./Results/test1.txt"), wxDefaultPosition, wxDefaultSize, 0);
 	tbxObjectComparisonFile1->Enable(false);
 	tbxObjectComparisonFile1->SetMinSize(wxSize(200, -1));
 
@@ -156,7 +156,7 @@ MainWindow::MainWindow() :
 	lblObjectComparisonFile2->Wrap(-1);
 	lytObjectComparisonFile2->Add(lblObjectComparisonFile2, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-	tbxObjectComparisonFile2 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./test2.txt"), wxDefaultPosition, wxDefaultSize, 0);
+	tbxObjectComparisonFile2 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./Results/test2.txt"), wxDefaultPosition, wxDefaultSize, 0);
 	tbxObjectComparisonFile2->Enable(false);
 	tbxObjectComparisonFile2->SetMinSize(wxSize(200, -1));
 
@@ -215,12 +215,13 @@ void MainWindow::selectChainCode(wxCommandEvent& event) {
 }
 
 void MainWindow::loadF8(wxCommandEvent& event) {
-	findEdgePixelsWithBresenham(Pixel(0, 10), Pixel(5, 0), PixelField(50, std::vector<Pixel>(50)));
+	//findEdgePixelsWithBresenham(Pixel(0, 10), Pixel(5, 0), PixelField(50, std::vector<Pixel>(50)));
 
 	// Reading a file with the F8 chain code.
 	std::string file = tbxChainCodeLoading->GetValue().ToStdString();
 	const uint rotation = sbxChainCodeLoadingRotation->GetValue();
-	const bool success = sweep.readFileF8(file, rotation);
+	const uint scale = sbxChainCodeLoadingScale->GetValue();
+	const bool success = sweep.readFileF8(file, rotation, scale);
 
 	// Converting the F8 chain code to coordinates and drawing it on the image panel.
 	image->clearAllFlags();

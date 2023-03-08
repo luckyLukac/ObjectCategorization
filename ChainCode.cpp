@@ -3,12 +3,11 @@
 #include "ChainCode.hpp"
 
 
-ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation, const bool isF4) :
+ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation, const uint scale, const bool isF4) :
 	clockwise(clockwise),
 	startPoint(startPoint)
 
 {
-	const uint scale = 1;
 	this->scale = scale;
 
 	// Reading the chain code character by character.
