@@ -295,7 +295,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 							return false;
 						}
 
-						return distance(chain.pixels.back(), previousMidPixel) < 2 && isInTolerance(toRadians(chain.angle), sweepAngle);
+						return distance(chain.pixels.back(), previousMidPixel) < 2 * chainCodes[0].scale && isInTolerance(toRadians(chain.angle), sweepAngle);
 					});
 
 					if (it != chains.end() && distance(previousMidPixel, midPixel) < vicinity) {
@@ -316,9 +316,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 					}
 
 					it->pixels.push_back(midPixel);
-					dc.SetPen(*wxRED_PEN);
-					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
-					dc.SetPen(*wxBLACK_PEN);
+					//dc.SetPen(*wxRED_PEN);
+					//dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+					//dc.SetPen(*wxBLACK_PEN);
 				}
 			}
 		}
@@ -426,16 +426,25 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 
 std::vector<wxColor> colors({
 	wxColor(255,   0,   0),  // Red (0°)
-	wxColor(  0,   0, 255),  // Blue (45°)
-	wxColor(34, 139,  34),  // Green (90°)
-	wxColor(255,  0,  255),  // Magenta (135°)
-	//wxColor(255, 140,  80),  // Orange (135°)
+	wxColor(  0,   0, 255),  // Blue (15°)
+	wxColor(34, 139,  34),  // Green (30°)
+	wxColor(255,  0,  255),  // Magenta (45°)
+	wxColor(255, 140,  80),  // Orange (60°)
+	wxColor(0, 0, 0),		// Black (75°)
+	wxColor(76, 0, 153),  // Purple (90°)
+
+	wxColor(255,  0,  255),  // Magenta (105°)
+	wxColor(255, 140,  80),  // Orange (120°)
+	wxColor(0, 0, 0),		// Black (135°)
+	wxColor(76, 0, 153),  // Purple (150°)
+	wxColor(34, 139,  34),  // Green (165°)
+
 });
 
 // Plotting the segments.
 void LineSweeping::plotChains(wxDC& dc) const {
 	for (const Chain& chain : chains) {
-		const uint index = static_cast<uint>((chain.angle + 1.0) / 45);
+		const uint index = static_cast<uint>((chain.angle + 1.0) / 15);
 		dc.SetPen(wxPen(colors[index], 2));
 		
 		if (chain.pixels.size() < 10) {
@@ -677,7 +686,9 @@ void LineSweeping::sweep() {
 		// Moving the rasterized line segment vertically.
 		for (int i = 0; i < maxCoordinate - 1; i++) {
 			const std::vector<Pixel> edgePixels = findEdgePixels(bresenhamPixels);  // Finding edge pixels on the rasterized line.
-			buildChainsIteratively(edgePixels);  // Iterative chain building.
+			if (!edgePixels.empty()) {
+				buildChainsIteratively(edgePixels);  // Iterative chain building.
+			}
 
 			// Increasing each pixel Y coordinate.
 			std::transform(
@@ -700,7 +711,9 @@ void LineSweeping::sweep() {
 		// Moving the rasterized line segment vertically.
 		for (int i = 0; i < maxCoordinate - 1; i++) {
 			const std::vector<Pixel> edgePixels = findEdgePixels(bresenhamPixels);  // Finding edge pixels on the rasterized line.
-			buildChainsIteratively(edgePixels);  // Iterative chain building.
+			if (!edgePixels.empty()) {
+				buildChainsIteratively(edgePixels);  // Iterative chain building.
+			}
 
 			// Increasing each pixel X coordinate.
 			std::transform(
@@ -720,7 +733,7 @@ void LineSweeping::sweep() {
 				// Bresenham rasterization algorithm.
 				Pixel startPoint(Pixel(0, y));
 				Pixel endPoint = getEndPointForBresenham(startPoint, sweepAngle, maxCoordinate);
-				dc.DrawLine(startPoint.x * plotRatio, (maxCoordinate - startPoint.y) * plotRatio, endPoint.x * plotRatio, (maxCoordinate - endPoint.y) * plotRatio);
+				//dc.DrawLine(startPoint.x * plotRatio, (maxCoordinate - startPoint.y) * plotRatio, endPoint.x * plotRatio, (maxCoordinate - endPoint.y) * plotRatio);
 
 				std::vector<Pixel> edgePixels = findEdgePixelsWithBresenham(startPoint, endPoint, pixelField);
 				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
@@ -738,7 +751,9 @@ void LineSweeping::sweep() {
 				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, PI - sweepAngle);  // Rasterization method.
 				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
-				buildChainsIteratively(edgePixels);  // Iterative chain building.
+				if (!edgePixels.empty()) {
+					buildChainsIteratively(edgePixels);  // Iterative chain building.
+				}
 			}
 		}
 		else if (toDegrees(sweepAngle) < 180.0) {
@@ -750,7 +765,9 @@ void LineSweeping::sweep() {
 				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
 				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
-				buildChainsIteratively(edgePixels);  // Iterative chain building.
+				if (!edgePixels.empty()) {
+					buildChainsIteratively(edgePixels);  // Iterative chain building.
+				}
 			}
 			for (int y = maxCoordinate; y >= 0; y -= 1) {
 				// Bresenham rasterization algorithm.
@@ -760,7 +777,9 @@ void LineSweeping::sweep() {
 				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
 				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
 				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
-				buildChainsIteratively(edgePixels);  // Iterative chain building.
+				if (!edgePixels.empty()) {
+					buildChainsIteratively(edgePixels);  // Iterative chain building.
+				}
 			}
 		}
 	}
@@ -842,7 +861,7 @@ FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVecto
 
 	std::sort(distances.begin(), distances.end());
 	std::reverse(distances.begin(), distances.end());
-	const double maxLength = distances[0];
+	const double maxLength = distances.empty() ? 1.0 : distances[0];
 	for (uint i = 0; i < distances.size(); i++) {
 		distances[i] /= maxLength;
 	}

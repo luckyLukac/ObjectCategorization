@@ -92,7 +92,7 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 /// <param name="endPoint">: end pixel of the line segment</param>
 /// <param name="pixelField">: pixel field of the rasterized scene with an object</param>
 /// <returns>list of edge pixels</returns>
-std::vector<Pixel> findEdgePixelsWithBresenham(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField);
+std::vector<Pixel> findEdgePixelsWithBresenham(Pixel startPoint, Pixel endPoint, const PixelField& pixelField);
 
 
 // ROTATION FUNCTIONS

@@ -23,104 +23,166 @@ MainWindow::MainWindow() :
 	** DO NOT TOUCH!!!
 	*/
 	this->SetSizeHints(wxDefaultSize, wxDefaultSize);
+
 	wxBoxSizer* lytWindow;
 	lytWindow = new wxBoxSizer(wxHORIZONTAL);
+
 	//image = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL);
 	lytWindow->Add(image, 1, wxEXPAND | wxALL, 5);
+
 	wxBoxSizer* lytControls;
 	lytControls = new wxBoxSizer(wxVERTICAL);
+
 	wxStaticBoxSizer* gbxChainCodeLoading;
 	gbxChainCodeLoading = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Chain code loading")), wxVERTICAL);
+
 	wxBoxSizer* lytChainCodeLoading;
 	lytChainCodeLoading = new wxBoxSizer(wxVERTICAL);
+
 	wxBoxSizer* lytChainCodeLoadingFile;
 	lytChainCodeLoadingFile = new wxBoxSizer(wxHORIZONTAL);
+
 	lblChainCodeLoading = new wxStaticText(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("File:"), wxDefaultPosition, wxDefaultSize, 0);
 	lblChainCodeLoading->Wrap(-1);
 	lytChainCodeLoadingFile->Add(lblChainCodeLoading, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+
 	tbxChainCodeLoading = new wxTextCtrl(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("./F8 Datasets/fcced_circle.txt"), wxDefaultPosition, wxDefaultSize, 0);
 	tbxChainCodeLoading->Enable(false);
 	tbxChainCodeLoading->SetMinSize(wxSize(200, -1));
+
 	lytChainCodeLoadingFile->Add(tbxChainCodeLoading, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
 	btnSearchChainCode = new wxButton(gbxChainCodeLoading->GetStaticBox(), 0, wxT("Search"), wxDefaultPosition, wxDefaultSize, 0);
-	
 	btnSearchChainCode->SetMaxSize(wxSize(50, -1));
+
 	lytChainCodeLoadingFile->Add(btnSearchChainCode, 1, wxALL, 5);
+
+
 	lytChainCodeLoading->Add(lytChainCodeLoadingFile, 1, wxEXPAND, 5);
+
 	wxBoxSizer* lytChainCodeLoadingRotation;
 	lytChainCodeLoadingRotation = new wxBoxSizer(wxHORIZONTAL);
+
 	lblChainCodeLoadingRotation = new wxStaticText(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("Rotation:"), wxDefaultPosition, wxDefaultSize, 0);
 	lblChainCodeLoadingRotation->Wrap(-1);
 	lytChainCodeLoadingRotation->Add(lblChainCodeLoadingRotation, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+
 	sbxChainCodeLoadingRotation = new wxSpinCtrl(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, 7, 0);
 	lytChainCodeLoadingRotation->Add(sbxChainCodeLoadingRotation, 1, wxALIGN_CENTER | wxALL | wxEXPAND, 5);
+
+
 	lytChainCodeLoading->Add(lytChainCodeLoadingRotation, 1, wxEXPAND, 5);
 
+	wxBoxSizer* lytChainCodeLoadingScale;
+	lytChainCodeLoadingScale = new wxBoxSizer(wxHORIZONTAL);
+
+	lblChainCodeLoadingScale = new wxStaticText(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxT("Scale:      "), wxDefaultPosition, wxDefaultSize, 0);
+	lblChainCodeLoadingScale->Wrap(-1);
+	lytChainCodeLoadingScale->Add(lblChainCodeLoadingScale, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+
+	sbxChainCodeLoadingScale = new wxSpinCtrl(gbxChainCodeLoading->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 1, 4, 1);
+	lytChainCodeLoadingScale->Add(sbxChainCodeLoadingScale, 1, wxALIGN_CENTER | wxALL | wxEXPAND, 5);
+
+
+	lytChainCodeLoading->Add(lytChainCodeLoadingScale, 1, wxEXPAND, 5);
+
 	btnChainCodeLoad = new wxButton(gbxChainCodeLoading->GetStaticBox(), 1, wxT("Load chain code"), wxDefaultPosition, wxDefaultSize, 0);
-	
 	lytChainCodeLoading->Add(btnChainCodeLoad, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 5);
+
+
 	gbxChainCodeLoading->Add(lytChainCodeLoading, 1, wxEXPAND, 5);
+
+
 	lytControls->Add(gbxChainCodeLoading, 1, wxEXPAND, 5);
+
 	wxStaticBoxSizer* gbxMultisweep;
 	gbxMultisweep = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Multisweep algorithm")), wxVERTICAL);
+
 	wxBoxSizer* lytMultisweep;
 	lytMultisweep = new wxBoxSizer(wxVERTICAL);
+
 	wxBoxSizer* lytMultisweepOutput;
 	lytMultisweepOutput = new wxBoxSizer(wxHORIZONTAL);
+
 	lblMultisweepOutput = new wxStaticText(gbxMultisweep->GetStaticBox(), wxID_ANY, wxT("Output file:"), wxDefaultPosition, wxDefaultSize, 0);
 	lblMultisweepOutput->Wrap(-1);
 	lytMultisweepOutput->Add(lblMultisweepOutput, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+
 	tbxMultisweepOutput = new wxTextCtrl(gbxMultisweep->GetStaticBox(), wxID_ANY, wxT("test1"), wxDefaultPosition, wxDefaultSize, 0);
 	tbxMultisweepOutput->SetMinSize(wxSize(200, -1));
+
 	lytMultisweepOutput->Add(tbxMultisweepOutput, 1, wxALIGN_CENTER_VERTICAL | wxALL, 5);
+
+
 	lytMultisweep->Add(lytMultisweepOutput, 1, wxEXPAND, 5);
 
 	btnMultisweep = new wxButton(gbxMultisweep->GetStaticBox(), 2, wxT("Run"), wxDefaultPosition, wxDefaultSize, 0);
-	
 	lytMultisweep->Add(btnMultisweep, 0, wxALIGN_CENTER | wxALL, 5);
+
+
 	gbxMultisweep->Add(lytMultisweep, 1, wxEXPAND, 5);
+
+
 	lytControls->Add(gbxMultisweep, 0, wxEXPAND, 5);
+
 	wxStaticBoxSizer* gbxObjectComparison;
 	gbxObjectComparison = new wxStaticBoxSizer(new wxStaticBox(this, wxID_ANY, wxT("Object comparison")), wxVERTICAL);
+
 	wxBoxSizer* lytObjectComparisonFile1;
 	lytObjectComparisonFile1 = new wxBoxSizer(wxHORIZONTAL);
+
 	lblObjectComparisonFile1 = new wxStaticText(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("File 1:"), wxDefaultPosition, wxDefaultSize, 0);
 	lblObjectComparisonFile1->Wrap(-1);
 	lytObjectComparisonFile1->Add(lblObjectComparisonFile1, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-	tbxObjectComparisonFile1 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./Results/test1.txt"), wxDefaultPosition, wxDefaultSize, 0);
-	//tbxObjectComparisonFile1->Enable(false);
+
+	tbxObjectComparisonFile1 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./test1.txt"), wxDefaultPosition, wxDefaultSize, 0);
+	tbxObjectComparisonFile1->Enable(false);
 	tbxObjectComparisonFile1->SetMinSize(wxSize(200, -1));
+
 	lytObjectComparisonFile1->Add(tbxObjectComparisonFile1, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
 	btnObjectComparisonFile1 = new wxButton(gbxObjectComparison->GetStaticBox(), 3, wxT("Search"), wxDefaultPosition, wxDefaultSize, 0);
-	
 	btnObjectComparisonFile1->SetMaxSize(wxSize(50, -1));
+
 	lytObjectComparisonFile1->Add(btnObjectComparisonFile1, 0, wxALL, 5);
+
+
 	gbxObjectComparison->Add(lytObjectComparisonFile1, 1, wxEXPAND, 5);
+
 	wxBoxSizer* lytObjectComparisonFile2;
 	lytObjectComparisonFile2 = new wxBoxSizer(wxHORIZONTAL);
+
 	lblObjectComparisonFile2 = new wxStaticText(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("File 2:"), wxDefaultPosition, wxDefaultSize, 0);
 	lblObjectComparisonFile2->Wrap(-1);
 	lytObjectComparisonFile2->Add(lblObjectComparisonFile2, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-	tbxObjectComparisonFile2 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./Results/test2.txt"), wxDefaultPosition, wxDefaultSize, 0);
-	//tbxObjectComparisonFile2->Enable(false);
+
+	tbxObjectComparisonFile2 = new wxTextCtrl(gbxObjectComparison->GetStaticBox(), wxID_ANY, wxT("./test2.txt"), wxDefaultPosition, wxDefaultSize, 0);
+	tbxObjectComparisonFile2->Enable(false);
 	tbxObjectComparisonFile2->SetMinSize(wxSize(200, -1));
+
 	lytObjectComparisonFile2->Add(tbxObjectComparisonFile2, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
 	btnObjectComparisonFile2 = new wxButton(gbxObjectComparison->GetStaticBox(), 4, wxT("Search"), wxDefaultPosition, wxDefaultSize, 0);
-	
 	btnObjectComparisonFile2->SetMaxSize(wxSize(50, -1));
+
 	lytObjectComparisonFile2->Add(btnObjectComparisonFile2, 0, wxALL, 5);
+
+
 	gbxObjectComparison->Add(lytObjectComparisonFile2, 1, wxEXPAND, 5);
 
 	btnObjectComparison = new wxButton(gbxObjectComparison->GetStaticBox(), 5, wxT("Compare"), wxDefaultPosition, wxDefaultSize, 0);
-	
 	gbxObjectComparison->Add(btnObjectComparison, 0, wxALIGN_CENTER | wxALL, 5);
+
+
 	lytControls->Add(gbxObjectComparison, 0, wxEXPAND, 5);
+
+
 	lytWindow->Add(lytControls, 0, wxALL, 5);
+
+
 	this->SetSizer(lytWindow);
 	this->Layout();
+
 	this->Centre(wxBOTH);
 	
 
@@ -185,13 +247,15 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	// Sweeping the object.
 	std::vector<LineSweeping> sweepVector(12);
 	
-	//#pragma omp parallel for
-	const uint step = 15;
-	for (int i = 15; i < 16; i += step) {
+	//const uint startAngle = 0;
+	//const uint finalAngle = 180;
+	//const uint step = 15;
+	#pragma omp parallel for
+	for (int i = 0; i < 180; i += 15) {
 		LineSweeping currentSweep = sweep;
 		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
 		currentSweep.sweep();						      // Sweeping the object with the sweep line.
-		sweepVector[static_cast<int>(i / step)] = currentSweep;
+		sweepVector[static_cast<int>(i / 15)] = currentSweep;
 	}
 
 	auto end = std::chrono::steady_clock::now();
@@ -289,10 +353,10 @@ void MainWindow::compareResults(wxCommandEvent& event) {
 	std::vector<double> chain1((std::istream_iterator<double>(if1)), std::istream_iterator<double>());
 	std::vector<double> chain2((std::istream_iterator<double>(if2)), std::istream_iterator<double>());
 
-	if (difference(chain1.size(), chain2.size()) > 4) {
-		wxMessageBox("NO", "", wxOK);
-		return;
-	}
+	//if (difference(chain1.size(), chain2.size()) > 4) {
+	//	wxMessageBox("NO", "", wxOK);
+	//	return;
+	//}
 
 	for (uint i = 0; i < static_cast<uint>(std::round(0.7 * chain1.size())); i++) {
 		if (difference(chain1[i], chain2[i]) > 0.1) {

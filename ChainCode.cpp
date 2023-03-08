@@ -6,37 +6,54 @@
 ChainCode::ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation, const bool isF4) :
 	clockwise(clockwise),
 	startPoint(startPoint)
+
 {
 	const uint scale = 1;
 	this->scale = scale;
 
 	// Reading the chain code character by character.
 	for (const char& ch : chainCode) {
-		for (uint i = 0; i < scale; i++) {
-			uint order = ch - '0';
-			if (isF4) {
-				order *= 2;
-			}
-			order = (order + rotation) % 8;
+		uint order = ch - '0';
+		if (isF4) {
+			order *= 2;
+		}
+		order = (order + rotation) % 8;
 		
-			// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
-			if (order == 0 || order == 2 || order == 4 || order == 6) {
+		// If a value is 0, 1, 2 or 3, the value is added to the chain code vector.
+		if (order == 0 || order == 2 || order == 4 || order == 6) {
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(order);
 			}
-			else if (order == 1) {
+		}
+		else if (order == 1) {
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(0);
+			}
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(2);
 			}
-			else if (order == 3) {
+		}
+		else if (order == 3) {
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(2);
+			}
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(4);
 			}
-			else if (order == 5) {
+		}
+		else if (order == 5) {
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(4);
+			}
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(6);
 			}
-			else if (order == 7) {
+		}
+		else if (order == 7) {
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(6);
+			}
+			for (uint i = 0; i < scale; i++) {
 				code.push_back(0);
 			}
 		}

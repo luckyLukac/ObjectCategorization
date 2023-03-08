@@ -20,6 +20,8 @@ private:
 	wxButton* btnSearchChainCode;
 	wxStaticText* lblChainCodeLoadingRotation;
 	wxSpinCtrl* sbxChainCodeLoadingRotation;
+	wxStaticText* lblChainCodeLoadingScale;
+	wxSpinCtrl* sbxChainCodeLoadingScale;
 	wxButton* btnChainCodeLoad;
 	wxStaticText* lblMultisweepOutput;
 	wxTextCtrl* tbxMultisweepOutput;
