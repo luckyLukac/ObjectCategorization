@@ -861,18 +861,18 @@ FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVecto
 	std::vector<double> distances;
 	for (uint i = 0; i < sweepVector.size(); i++) {
 		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
-			sum += sweepVector[i].chains[j].pixels.size();
-			
-			double euclideanDistance = 0.0;
-			for (uint k = 1; k < sweepVector[i].chains[j].pixels.size(); k++) {
-				euclideanDistance += distance(sweepVector[i].chains[j].pixels[k - 1], sweepVector[i].chains[j].pixels[k]);
-			}
+			//sum += sweepVector[i].chains[j].pixels.size();
+			//
+			//double euclideanDistance = 0.0;
+			//for (uint k = 1; k < sweepVector[i].chains[j].pixels.size(); k++) {
+			//	euclideanDistance += distance(sweepVector[i].chains[j].pixels[k - 1], sweepVector[i].chains[j].pixels[k]);
+			//}
 
-			distances.push_back(euclideanDistance);
+			//distances.push_back(euclideanDistance);
+
+			distances.push_back(distance(sweepVector[i].chains[j].pixels.front(), sweepVector[i].chains[j].pixels.back()));
 		}
 	}
-
-	// NORMALIZATION ACCORDING TO AREA OF THE OBJECT
 
 	std::sort(distances.begin(), distances.end());
 	std::reverse(distances.begin(), distances.end());
