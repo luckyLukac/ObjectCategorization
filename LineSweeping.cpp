@@ -278,9 +278,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 2.1) {
-				continue;
-			}
+			//if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 2.1) {
+			//	continue;
+			//}
 
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
@@ -299,7 +299,7 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 							return false;
 						}
 
-						return distance(chain.pixels.back(), previousMidPixel) < 10 && isInTolerance(toRadians(chain.angle), sweepAngle);
+						return distance(chain.pixels.back(), previousMidPixel) < 10 * chainCodes[0].scale && isInTolerance(toRadians(chain.angle), sweepAngle);
 					});
 
 					if (it != chains.end() && distance(previousMidPixel, midPixel) < vicinity) {
@@ -856,18 +856,31 @@ FeatureVector LineSweeping::calculateFeatureVector() {
 }
 
 FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVector) {
+	uint sum = 0;
+
 	std::vector<double> distances;
 	for (uint i = 0; i < sweepVector.size(); i++) {
 		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
-			distances.push_back(distance(sweepVector[i].chains[j].pixels.front(), sweepVector[i].chains[j].pixels.back()));
+			sum += sweepVector[i].chains[j].pixels.size();
+			
+			double euclideanDistance = 0.0;
+			for (uint k = 1; k < sweepVector[i].chains[j].pixels.size(); k++) {
+				euclideanDistance += distance(sweepVector[i].chains[j].pixels[k - 1], sweepVector[i].chains[j].pixels[k]);
+			}
+
+			distances.push_back(euclideanDistance);
 		}
 	}
+
+	// NORMALIZATION ACCORDING TO AREA OF THE OBJECT
 
 	std::sort(distances.begin(), distances.end());
 	std::reverse(distances.begin(), distances.end());
 	const double maxLength = distances.empty() ? 1.0 : distances[0];
 	for (uint i = 0; i < distances.size(); i++) {
 		distances[i] /= maxLength;
+		//distances[i] /= sweepVector[0].maxCoordinate;
+		//distances[i] /= sum;
 	}
 	distances.erase(std::remove_if(distances.begin(), distances.end(), [](const double distance) { return distance < 0.2; }), distances.end());
 
