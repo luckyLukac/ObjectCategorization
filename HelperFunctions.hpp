@@ -124,3 +124,11 @@ std::vector<LineSegment> douglasPeucker(const std::vector<Pixel>& pixels, const 
 /// <param name="lineSegment">: line segment for the distance calculation</param>
 /// <returns>tuple (index of the farthest point, distance)</returns>
 std::tuple<uint, double> farthestPoint(const std::vector<Pixel>& pixels, const LineSegment& lineSegment);
+
+/// <summary>
+/// Calculation of the average distance between pixels and a line segment.
+/// </summary>
+/// <param name="pixels">: list of pixels</param>
+/// <param name="lineSegment">: line segment for the distance calculation</param>
+/// <returns>average distance</returns>
+double averageDistanceBetweenPixelsAndLineSegment(const std::vector<Pixel>& pixels, const LineSegment& lineSegment);

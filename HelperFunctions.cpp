@@ -421,3 +421,24 @@ std::tuple<uint, double> farthestPoint(const std::vector<Pixel>& pixels, const L
 
 	return std::make_tuple(maxIndex, maxDistance);
 }
+
+
+double averageDistanceBetweenPixelsAndLineSegment(const std::vector<Pixel>& pixels, const LineSegment& lineSegment) {
+	const Pixel& p1 = lineSegment.p1;
+	const Pixel& p2 = lineSegment.p2;
+
+	double sum = 0.0;
+
+	for (uint i = 0; i < pixels.size(); i++) {
+		const double currentDistance = (
+			std::abs((p2.x - p1.x) * (p1.y - pixels[i].y) - (p1.x - pixels[i].x) * (p2.y - p1.y)) /
+			std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2))
+		);
+
+		sum += currentDistance;
+	}
+
+	const double maxDistance = sum / pixels.size();
+
+	return maxDistance;
+}

@@ -278,9 +278,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			//if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 2.1) {
-			//	continue;
-			//}
+			if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 1.5) {
+				continue;
+			}
 
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
@@ -320,9 +320,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 					}
 
 					it->pixels.push_back(midPixel);
-					//dc.SetPen(*wxRED_PEN);
-					//dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
-					//dc.SetPen(*wxBLACK_PEN);
+					dc.SetPen(*wxRED_PEN);
+					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+					dc.SetPen(*wxBLACK_PEN);
 				}
 			}
 		}
@@ -740,9 +740,6 @@ void LineSweeping::sweep() {
 				//dc.DrawLine(startPoint.x * plotRatio, (maxCoordinate - startPoint.y) * plotRatio, endPoint.x * plotRatio, (maxCoordinate - endPoint.y) * plotRatio);
 
 				std::vector<Pixel> edgePixels = findEdgePixelsWithBresenham(startPoint, endPoint, pixelField);
-				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
-				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
-				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
 				if (!edgePixels.empty()) {
 					buildChainsIteratively(edgePixels);  // Iterative chain building.
 				}
@@ -752,9 +749,6 @@ void LineSweeping::sweep() {
 				Pixel startPoint = Pixel(x, maxCoordinate);
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), sweepAngle, maxCoordinate);
 				std::vector<Pixel> edgePixels = findEdgePixelsWithBresenham(startPoint, endPoint, pixelField);
-				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
-				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, PI - sweepAngle);  // Rasterization method.
-				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
 				if (!edgePixels.empty()) {
 					buildChainsIteratively(edgePixels);  // Iterative chain building.
 				}
@@ -766,9 +760,6 @@ void LineSweeping::sweep() {
 				Pixel startPoint(Pixel(x, maxCoordinate));
 				Pixel endPoint = getEndPointForBresenham(Pixel(x, maxCoordinate), sweepAngle, maxCoordinate);
 				std::vector<Pixel> edgePixels = findEdgePixelsWithBresenham(startPoint, endPoint, pixelField);
-				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
-				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
-				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
 				if (!edgePixels.empty()) {
 					buildChainsIteratively(edgePixels);  // Iterative chain building.
 				}
@@ -778,9 +769,6 @@ void LineSweeping::sweep() {
 				auto startPoint(Pixel(maxCoordinate, y));
 				auto endPoint = getEndPointForBresenham(startPoint, sweepAngle, maxCoordinate);
 				std::vector<Pixel> edgePixels = findEdgePixelsWithBresenham(startPoint, endPoint, pixelField);
-				//std::vector<Pixel> rasterizedLine = bresenham(startPoint, endPoint, pixelField);  // Rasterization method.
-				//std::vector<Pixel> rasterizedLine = clearyWyvill(startPoint, endPoint, pixelField, sweepAngle);  // Rasterization method.
-				//const std::vector<Pixel> edgePixels = findEdgePixels(rasterizedLine);  // Finding edge pixels on the rasterized line.
 				if (!edgePixels.empty()) {
 					buildChainsIteratively(edgePixels);  // Iterative chain building.
 				}
@@ -792,100 +780,37 @@ void LineSweeping::sweep() {
 	previousActualEdgePixels.clear();
 }
 
-// Calculation of a feature vector.
-FeatureVector LineSweeping::calculateFeatureVector() {
-	std::vector<double> distances(chains.size());
-	for (uint i = 0; i < chains.size(); i++) {
-		distances[i] = distance(chains[i].pixels.front(), chains[i].pixels.back());
-	}
-
-	std::sort(distances.begin(), distances.end());
-	std::reverse(distances.begin(), distances.end());
-	const double maxLength = distances[0];
-	for (uint i = 0; i < distances.size(); i++) {
-		distances[i] /= maxLength;
-	}
-	distances.erase(std::remove_if(distances.begin(), distances.end(), [](const double distance) { return distance < 0.2; }), distances.end());
-
-
-	//std::sort(chains.begin(), chains.end(), [](const Chain& chain1, const Chain& chain2) { return chain1.pixels.size() > chain2.pixels.size(); });
-	//const double maxLength = chains[0].totalLength();
-	//chains.erase(std::remove_if(chains.begin(), chains.end(), [maxLength](const Chain& chain) { return (chain.totalLength() / maxLength) < 0.2; }), chains.end());
-
-	//std::vector<Chain> chainVector(chains);  // Feature vector of the object.
-
-	//// Sorting the feature vector according to the chain lengths.
-	//std::sort(
-	//	chainVector.begin(),
-	//	chainVector.end(),
-	//	[](const Chain& s1, const Chain& s2) {
-	//		return s1.pixels.size() > s2.pixels.size();
-	//	}
-	//);
-
-	//// Creating a feature vector.
-	FeatureVector featureVector(distances);
-
-	//// Sorting the feature vector according to the chain lengths.
-	//std::sort(
-	//	featureVector.chainLengths.begin(),
-	//	featureVector.chainLengths.end(),
-	//	[](const double s1, const double s2) {
-	//		return s1 > s2;
-	//	}
-	//);
-
-	//if (!featureVector.chainLengths.empty()) {
-	//	const double maxLen = featureVector.chainLengths[0];
-	//	std::transform(
-	//		featureVector.chainLengths.begin(),
-	//		featureVector.chainLengths.end(),
-	//		featureVector.chainLengths.begin(),
-	//		[&maxLen](double d) {
-	//			return d / maxLen;
-	//		}
-	//	);
-	//}
-
-	//featureVector.chainLengths.erase(
-	//	std::remove_if(featureVector.chainLengths.begin(), featureVector.chainLengths.end(), [](const double len) { return len < 0.05; }),
-	//	featureVector.chainLengths.end()
-	//);
-
-	return featureVector;
-}
-
 FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVector) {
-	uint sum = 0;
-
-	std::vector<double> distances;
+	std::vector<std::pair<double, double>> features;
 	for (uint i = 0; i < sweepVector.size(); i++) {
 		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
-			//sum += sweepVector[i].chains[j].pixels.size();
-			//
-			//double euclideanDistance = 0.0;
-			//for (uint k = 1; k < sweepVector[i].chains[j].pixels.size(); k++) {
-			//	euclideanDistance += distance(sweepVector[i].chains[j].pixels[k - 1], sweepVector[i].chains[j].pixels[k]);
-			//}
+			Chain chain = sweepVector[i].chains[j];
 
-			//distances.push_back(euclideanDistance);
+			std::vector<LineSegment> ls = douglasPeucker(chain.pixels, LineSegment(chain.pixels.front(), chain.pixels.back()), 50.0);
+			std::vector<Pixel> pixels(2 * ls.size());
+			double dist = 0;
+			for (uint k = 0; k < ls.size(); k++) {
+				dist += distance(ls[k].p1, ls[k].p2);
+				pixels[2 * k] = ls[k].p1;
+				pixels[2 * k + 1] = ls[k].p2;
+			}
 
-			distances.push_back(distance(sweepVector[i].chains[j].pixels.front(), sweepVector[i].chains[j].pixels.back()));
+			const double avgError = averageDistanceBetweenPixelsAndLineSegment(pixels, LineSegment(chain.pixels.front(), chain.pixels.back()));
+
+			features.push_back(std::make_pair(dist, avgError));
 		}
 	}
 
-	std::sort(distances.begin(), distances.end());
-	std::reverse(distances.begin(), distances.end());
-	const double maxLength = distances.empty() ? 1.0 : distances[0];
-	for (uint i = 0; i < distances.size(); i++) {
-		distances[i] /= maxLength;
-		//distances[i] /= sweepVector[0].maxCoordinate;
-		//distances[i] /= sum;
+	std::sort(features.begin(), features.end());
+	std::reverse(features.begin(), features.end());
+	const double maxLength = features.empty() ? 1.0 : features[0].first;
+	for (uint i = 0; i < features.size(); i++) {
+		features[i].first /= maxLength;
 	}
-	distances.erase(std::remove_if(distances.begin(), distances.end(), [](const double distance) { return distance < 0.2; }), distances.end());
+	features.erase(std::remove_if(features.begin(), features.end(), [](const std::pair<double, double>& p) { return p.first < 0.2; }), features.end());
 
 	// Creating a feature vector.
-	FeatureVector featureVector(distances);
+	FeatureVector featureVector(features);
 
 	return featureVector;
 }
