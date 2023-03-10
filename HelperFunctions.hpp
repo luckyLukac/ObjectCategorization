@@ -75,7 +75,6 @@ Pixel getEndPointForBresenham(const Pixel& start, const double angle, const int 
 /// <returns>list of pixels of the rasterized line segment</returns>
 std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField);
 
-
 /// <summary>
 /// Cleary-Wyvill rasterization algorithm.
 /// </summary>
@@ -86,6 +85,14 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 /// <returns>list of pixels of the rasterized line segment</returns>
 std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, const PixelField& pixelField, const double angleOfRotation);
 
+/// <summary>
+/// Edge pixel detection using Bresenham rasterization algorithm.
+/// </summary>
+/// <param name="startPoint">: start pixel of the line segment</param>
+/// <param name="endPoint">: end pixel of the line segment</param>
+/// <param name="pixelField">: pixel field of the rasterized scene with an object</param>
+/// <returns>list of edge pixels</returns>
+std::vector<Pixel> findEdgePixelsWithBresenham(Pixel startPoint, Pixel endPoint, const PixelField& pixelField);
 
 
 // ROTATION FUNCTIONS
@@ -117,3 +124,11 @@ std::vector<LineSegment> douglasPeucker(const std::vector<Pixel>& pixels, const 
 /// <param name="lineSegment">: line segment for the distance calculation</param>
 /// <returns>tuple (index of the farthest point, distance)</returns>
 std::tuple<uint, double> farthestPoint(const std::vector<Pixel>& pixels, const LineSegment& lineSegment);
+
+/// <summary>
+/// Calculation of the average distance between pixels and a line segment.
+/// </summary>
+/// <param name="pixels">: list of pixels</param>
+/// <param name="lineSegment">: line segment for the distance calculation</param>
+/// <returns>average distance</returns>
+double averageDistanceBetweenPixelsAndLineSegment(const std::vector<Pixel>& pixels, const LineSegment& lineSegment);

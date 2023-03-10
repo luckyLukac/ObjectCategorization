@@ -12,6 +12,7 @@
 /// </summary>
 struct FeatureVector {
 	std::vector<double> chainLengths;  // Vector of chain lengths.
+	std::vector<double> chainFarthestPoints;  // Vector of chain lengths.
 
 
 	/// <summary>
@@ -24,7 +25,7 @@ struct FeatureVector {
 	/// Constructor of the feature vector with given distances.
 	/// </summary>
 	/// <param name="chains">: vector of distances</param>
-	FeatureVector(const std::vector<double>& distances);
+	FeatureVector(const std::vector<std::pair<double, double>>& distances);
 
 	/// <summary>
 	/// Output of the feature vector into a file.

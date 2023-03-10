@@ -23,8 +23,9 @@ struct ChainCode {
 	/// <param name="clockwise">: clockwise orientation if true, anti-clockwise otherwise</param>
 	/// <param name="startPoint">: starting pixel in the raster space</param>
 	/// <param name="rotation">: rotation on the level of the F8 chain code (0-7)</param>
+	/// <param name="rotation">: scale on the level of the F8 chain code (1-n)</param>
 	/// <param name="isF4">: true if the given code is F4, false otherwise</param>
-	ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation = 0, const bool isF4 = false);
+	ChainCode(const std::string& chainCode, const bool clockwise, const Pixel& startPoint, const uint rotation = 0, const uint scale = 0, const bool isF4 = false);
 
 	/// <summary>
 	/// Method for flipping the chain code orientation from clockwise to anti-clockwise and vice-versa.

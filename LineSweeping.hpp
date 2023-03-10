@@ -37,8 +37,8 @@ public:
 	void calculateCoordinatesFromChainCode();																																	   // Transforming chain code to coordinates.
 	void calculateBoundingBox();																																				   // Calculation of a bounding box according to point coordinates.
 	void fillRectangle(wxDC& dc, const int x, const int y, const int pixelSize, const int maxCoordinate, const wxPen& pen, const wxBrush& brush, const double ratio = 1.0) const;  // Filling a rectangle at X and Y coordinates.
-	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine, bool extended = false) const;																	   // Finding edge pixel pairs.
-	void buildChainsIteratively(const std::vector<Pixel>& rasterizedLine);																										   // Iterative chain building.
+	std::vector<Pixel> findEdgePixels(const std::vector<Pixel>& rasterizedLine) const;																	   // Finding edge pixel pairs.
+	void buildChainsIteratively(const std::vector<Pixel>& edgePixels);																					   // Iterative chain building.
 	bool isEdgePixelInVicinity(const uint vicinity, const Pixel& currentPixel, const Pixel& targetPixel);																		   // Checking whether a target pixel is in the vicinity of the current pixel on the object edge.
 	Pixel chainCodeMovePixel(const Pixel& currentPixel, const short direction);																									   // Obtaining a new pixel after chain code move.
 
@@ -56,10 +56,9 @@ public:
 	void setAngleOfRotation(const double angle);			  // Setting the angle of rotation (given in radians).
 
 	// PUBLIC METHODS
-	bool readFileF8(std::string file, const uint rotation = 0);		// Reading an F4 chain code file.
+	bool readFileF8(std::string file, const uint rotation, const uint scale);		// Reading an F4 chain code file.
 	void fillShape();												// Filling the loaded shape.
 	void sweep();													// Sweeping the object.
-	FeatureVector calculateFeatureVector();				            // Calculation of a feature vector.
 };
 
 FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVector);

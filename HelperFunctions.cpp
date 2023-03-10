@@ -148,8 +148,8 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 	const short signY = sign(deltaY);
 
 	// Helper values for coordinate calculation.
-	const int ax = std::abs(deltaX) << 1;
-	const int ay = std::abs(deltaY) << 1;
+	const int ax = 2 * std::abs(deltaX);
+	const int ay = 2 * std::abs(deltaY);
 	
 	// Starting X and Y coordinates.
 	int x = startPoint.x;
@@ -158,7 +158,7 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 
 	if (ax >= ay) {
 		// Calculating the current error.
-		error = ay - (ax >> 1);
+		error = ay - (ax / 2);
 
 		for (int i = 0; i <= std::abs(deltaX); i++) {
 			// Adding the new pixel to the vector.
@@ -178,7 +178,7 @@ std::vector<Pixel> bresenham(const Pixel& startPoint, const Pixel& endPoint, con
 	}
 	else {
 		// Calculating the current error.
-		error = ax - (ay >> 1);
+		error = ax - (ay / 2);
 
 		for (int i = 0; i <= std::abs(deltaY); i++) {
 			// Adding the new pixel to the vector.
@@ -253,6 +253,115 @@ std::vector<Pixel> clearyWyvill(const Pixel& startPoint, const Pixel& endPoint, 
 	return pixels;
 }
 
+std::vector<Pixel> findEdgePixelsWithBresenham(Pixel startPoint, Pixel endPoint, const PixelField& pixelField) {
+	std::vector<Pixel> pixels;
+
+	if (startPoint.x > endPoint.x) {
+		Pixel temp = startPoint;
+		startPoint = endPoint;
+		endPoint = temp;
+	}
+
+	// Calculating the difference between the both coordinates.
+	const double deltaX = endPoint.x - startPoint.x;
+	const double deltaY = endPoint.y - startPoint.y;
+	const short signX = deltaX >= 0 ? 1 : -1;
+	const short signY = deltaY >= 0 ? 1 : -1;
+	double coefficient = deltaY / deltaX;
+
+	// Starting X and Y coordinates.
+	double x = startPoint.x;
+	double y = startPoint.y;
+	double error = deltaY / deltaX;
+
+	if (std::abs(deltaX) >= std::abs(deltaY)) {
+		// Calculating the current error.
+		error = deltaY / deltaX;
+
+		if (error > 0) {
+			for (int i = 0; i <= std::abs(deltaX); i++) {
+				// Adding the new pixel to the vector.
+				const int pixelY = static_cast<int>(y + (error - coefficient));
+				if (x >= 0 && x < pixelField.size() && pixelY >= 0 && pixelY < pixelField.size() && pixelField[pixelY][x].position == Position::edge) {
+					pixels.push_back(Pixel(x, y + (error - coefficient), pixelField[pixelY][x].position, pixelField[pixelY][x].directionPrevious, pixelField[pixelY][x].directionNext));
+				}
+
+				// Adding the correct values to X and Y coordinates.
+				if (error > 0.5) {
+					error -= 1;
+					y += 1;
+				}
+
+				error += coefficient;
+				x += signX;
+			}
+		}
+		else {
+			for (int i = 0; i <= std::abs(deltaX); i++) {
+				// Adding the new pixel to the vector.
+				const int pixelY = static_cast<int>(y + (error - coefficient));
+				if (x >= 0 && x < pixelField.size() && pixelY >= 0 && pixelY < pixelField.size() && pixelField[pixelY][x].position == Position::edge) {
+					pixels.push_back(Pixel(x, y + (error - coefficient), pixelField[pixelY][x].position, pixelField[pixelY][x].directionPrevious, pixelField[pixelY][x].directionNext));
+				}
+
+				// Adding the correct values to X and Y coordinates.
+				if (error < -0.5) {
+					error += 1;
+					y -= 1;
+				}
+
+				error += coefficient;
+				x += signX;
+			}
+		}
+	}
+	else {
+		// Calculating the current error.
+		error = deltaX / deltaY;
+
+		if (error > 0) {
+			for (int i = 0; i <= std::abs(deltaY); i++) {
+				// Adding the new pixel to the vector.
+				const int pixelX = static_cast<int>(x + (error - 1 / coefficient));
+				if (pixelX < pixelField.size() && y < pixelField.size() && pixelField[y][pixelX].position == Position::edge) {
+					pixels.push_back(Pixel(x + (error - 1 / coefficient), y, pixelField[y][pixelX].position, pixelField[y][pixelX].directionPrevious, pixelField[y][pixelX].directionNext));
+				}
+
+				// Adding the correct values to X and Y coordinates.
+				if (error > 0.5) {
+					error -= 1;
+					x += signX;
+				}
+
+				error += (1 / coefficient);
+				y += signY;
+			}
+		}
+		else {
+			for (int i = 0; i <= std::abs(deltaY); i++) {
+				// Adding the new pixel to the vector.
+				const int pixelX = static_cast<int>(x + (1 / coefficient - error));
+				if (pixelX < pixelField.size() && y < pixelField.size() && pixelField[y][pixelX].position == Position::edge) {
+					pixels.push_back(Pixel(x + (1 / coefficient - error), y, pixelField[y][pixelX].position, pixelField[y][pixelX].directionPrevious, pixelField[y][pixelX].directionNext));
+				}
+
+				// Adding the correct values to X and Y coordinates.
+				if (error > 0.5) {
+					error -= 1;
+					x += signX;
+				}
+
+				error += (1 / coefficient);
+				y += signY;
+			}
+		}
+	}
+
+	return pixels;
+}
+
+
+
 Pixel rotate2D(const Pixel& point, const Pixel& referencePoint, const double angle) {
 	// Translating the point to reference point local coordinate system.
 	const int x = point.x - referencePoint.x;
@@ -311,4 +420,25 @@ std::tuple<uint, double> farthestPoint(const std::vector<Pixel>& pixels, const L
 	}
 
 	return std::make_tuple(maxIndex, maxDistance);
+}
+
+
+double averageDistanceBetweenPixelsAndLineSegment(const std::vector<Pixel>& pixels, const LineSegment& lineSegment) {
+	const Pixel& p1 = lineSegment.p1;
+	const Pixel& p2 = lineSegment.p2;
+
+	double sum = 0.0;
+
+	for (uint i = 0; i < pixels.size(); i++) {
+		const double currentDistance = (
+			std::abs((p2.x - p1.x) * (p1.y - pixels[i].y) - (p1.x - pixels[i].x) * (p2.y - p1.y)) /
+			std::sqrt(std::pow(p2.x - p1.x, 2) + std::pow(p2.y - p1.y, 2))
+		);
+
+		sum += currentDistance;
+	}
+
+	const double maxDistance = sum / pixels.size();
+
+	return maxDistance;
 }

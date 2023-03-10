@@ -10,8 +10,14 @@ FeatureVector::FeatureVector(const std::vector<Chain>& chains) {
 	}
 }
 
-FeatureVector::FeatureVector(const std::vector<double>& distances) {
-	chainLengths = distances;
+FeatureVector::FeatureVector(const std::vector<std::pair<double, double>>& distances) {
+	chainLengths = std::vector<double>(distances.size());
+	chainFarthestPoints = std::vector<double>(distances.size());
+
+	for (uint i = 0; i < distances.size(); i++) {
+		chainLengths[i] = distances[i].first;
+		chainFarthestPoints[i] = distances[i].second;
+	}
 }
 
 
@@ -27,8 +33,9 @@ bool FeatureVector::writeToFile(const std::string& fileName, const std::string& 
 	out << chainLengths.size() << "\n";
 
 	// Output of each chain length.
-	for (const double chainLength : chainLengths) {
-		out << chainLength << " ";
+	//for (const double chainLength : chainLengths) {
+	for (uint i = 0; i < chainLengths.size(); i++) {
+		out << chainLengths[i] << ":" << chainFarthestPoints[i] << " ";
 	}
 
 	return true;
