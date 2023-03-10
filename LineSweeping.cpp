@@ -320,9 +320,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 					}
 
 					it->pixels.push_back(midPixel);
-					dc.SetPen(*wxRED_PEN);
-					dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
-					dc.SetPen(*wxBLACK_PEN);
+					//dc.SetPen(*wxRED_PEN);
+					//dc.DrawLine(previousMidPixel.x * plotRatio, (maxCoordinate - previousMidPixel.y) * plotRatio, midPixel.x * plotRatio, (maxCoordinate - midPixel.y) * plotRatio);
+					//dc.SetPen(*wxBLACK_PEN);
 				}
 			}
 		}
@@ -786,18 +786,20 @@ FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVecto
 		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
 			Chain chain = sweepVector[i].chains[j];
 
-			std::vector<LineSegment> ls = douglasPeucker(chain.pixels, LineSegment(chain.pixels.front(), chain.pixels.back()), 50.0);
-			std::vector<Pixel> pixels(2 * ls.size());
-			double dist = 0;
-			for (uint k = 0; k < ls.size(); k++) {
-				dist += distance(ls[k].p1, ls[k].p2);
-				pixels[2 * k] = ls[k].p1;
-				pixels[2 * k + 1] = ls[k].p2;
-			}
+			//std::vector<LineSegment> ls = douglasPeucker(chain.pixels, LineSegment(chain.pixels.front(), chain.pixels.back()), 50.0);
+			//std::vector<Pixel> pixels(2 * ls.size());
+			//double dist = 0;
+			//for (uint k = 0; k < ls.size(); k++) {
+			//	dist += distance(ls[k].p1, ls[k].p2);
+			//	pixels[2 * k] = ls[k].p1;
+			//	pixels[2 * k + 1] = ls[k].p2;
+			//}
 
-			const double avgError = averageDistanceBetweenPixelsAndLineSegment(pixels, LineSegment(chain.pixels.front(), chain.pixels.back()));
+			//const double avgError = averageDistanceBetweenPixelsAndLineSegment(pixels, LineSegment(chain.pixels.front(), chain.pixels.back()));
 
-			features.push_back(std::make_pair(dist, avgError));
+			//features.push_back(std::make_pair(dist, avgError));
+
+			features.push_back(std::make_pair(chain.pixels.size(), 0.0));
 		}
 	}
 

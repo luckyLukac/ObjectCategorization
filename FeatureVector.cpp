@@ -35,7 +35,7 @@ bool FeatureVector::writeToFile(const std::string& fileName, const std::string& 
 	// Output of each chain length.
 	//for (const double chainLength : chainLengths) {
 	for (uint i = 0; i < chainLengths.size(); i++) {
-		out << chainLengths[i] << ":" << chainFarthestPoints[i] << " ";
+		out << chainLengths[i] << /*":" << chainFarthestPoints[i] <<*/ " ";
 	}
 
 	return true;

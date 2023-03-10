@@ -250,9 +250,9 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	
 	const uint startAngle = 0;
 	const uint finalAngle = 180;
-	const uint step = 15;
+	const uint step = 45;
 
-	//#pragma omp parallel for
+	#pragma omp parallel for
 	for (int i = startAngle; i < finalAngle; i += step) {
 		LineSweeping currentSweep = sweep;
 		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
@@ -288,7 +288,6 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 void MainWindow::selectFirstObjectResult(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
 	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-	//wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
@@ -306,7 +305,6 @@ void MainWindow::selectFirstObjectResult(wxCommandEvent& event) {
 void MainWindow::selectSecondObjectResult(wxCommandEvent& event) {
 	// Creating a file dialog to choose the file with the F4 chain code..
 	wxFileDialog fd(this, "Open TXT file", "C:\\Users\\Uporabnik\\source\\repos\\ObjectCategorization\\Results", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-	//wxFileDialog fd(this, "Open TXT file", "C:\\Luka\\Results\\", "", "TXT files (*.txt)|*.txt", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	// If a user changed his mind, our job is over here.
 	if (fd.ShowModal() == wxID_CANCEL) {
