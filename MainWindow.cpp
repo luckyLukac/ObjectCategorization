@@ -250,7 +250,7 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	
 	const uint startAngle = 0;
 	const uint finalAngle = 180;
-	const uint step = 45;
+	const uint step = 15;
 
 	#pragma omp parallel for
 	for (int i = startAngle; i < finalAngle; i += step) {
@@ -353,13 +353,9 @@ void MainWindow::compareResults(wxCommandEvent& event) {
 	std::vector<double> chain1((std::istream_iterator<double>(if1)), std::istream_iterator<double>());
 	std::vector<double> chain2((std::istream_iterator<double>(if2)), std::istream_iterator<double>());
 
-	//if (difference(chain1.size(), chain2.size()) > 4) {
-	//	wxMessageBox("NO", "", wxOK);
-	//	return;
-	//}
-
-	for (uint i = 0; i < static_cast<uint>(std::round(0.7 * chain1.size())); i++) {
-		if (difference(chain1[i], chain2[i]) > 0.1) {
+	const uint chainCount = (chain1.size() == 12 || chain2.size() == 12) ? std::min(chain1.size(), chain2.size()) : static_cast<uint>(std::round(0.7 * chain1.size()));
+	for (uint i = 0; i < chainCount; i++) {
+		if (difference(chain1[i], chain2[i]) > 0.10) {
 			wxMessageBox("NO", "", wxOK);
 			return;
 		}

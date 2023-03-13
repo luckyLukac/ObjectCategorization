@@ -278,9 +278,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 1.5) {
-				continue;
-			}
+			//if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 1.5) {
+			//	continue;
+			//}
 
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
@@ -799,7 +799,7 @@ FeatureVector calculateFeatureVector(const std::vector<LineSweeping>& sweepVecto
 
 			//features.push_back(std::make_pair(dist, avgError));
 
-			features.push_back(std::make_pair(chain.pixels.size(), 0.0));
+			features.push_back(std::make_pair(distance(chain.pixels.front(), chain.pixels.back()), 0.0));
 		}
 	}
 
