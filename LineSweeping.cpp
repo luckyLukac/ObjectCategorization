@@ -278,9 +278,9 @@ void LineSweeping::buildChainsIteratively(const std::vector<Pixel>& edgePixels) 
 
 			const Pixel midPixel = (currentEdgePixels[i - 1] + currentEdgePixels[i]) / 2.0;
 
-			//if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 1.5) {
-			//	continue;
-			//}
+			if (distance(currentEdgePixels[i - 1], currentEdgePixels[i]) <= 2.5) {
+				continue;
+			}
 
 			if (count > previousActualEdgePixels.size()) {
 				Chain newChain;
@@ -430,18 +430,40 @@ void LineSweeping::plotBresenhamLine(wxDC& dc, const std::vector<Pixel>& rasteri
 
 std::vector<wxColor> colors({
 	wxColor(255,   0,   0),  // Red (0°)
-	wxColor(  0,   0, 255),  // Blue (15°)
-	wxColor(34, 139,  34),  // Green (30°)
-	wxColor(255,  0,  255),  // Magenta (45°)
-	wxColor(255, 140,  80),  // Orange (60°)
-	wxColor(0, 0, 0),		// Black (75°)
-	wxColor(76, 0, 153),  // Purple (90°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	wxColor(255,   0,   0),  // Red (0°)
+	//wxColor(  0,   0, 255),  // Blue (15°)
+	//wxColor(34, 139,  34),  // Green (30°)
+	//wxColor(255,  0,  255),  // Magenta (45°)
+	//wxColor(255, 140,  80),  // Orange (60°)
+	//wxColor(0, 0, 0),		// Black (75°)
+	//wxColor(76, 0, 153),  // Purple (90°)
 
-	wxColor(255,  0,  255),  // Magenta (105°)
-	wxColor(255, 140,  80),  // Orange (120°)
-	wxColor(0, 0, 0),		// Black (135°)
-	wxColor(76, 0, 153),  // Purple (150°)
-	wxColor(34, 139,  34),  // Green (165°)
+	//wxColor(255,  0,  255),  // Magenta (105°)
+	//wxColor(255, 140,  80),  // Orange (120°)
+	//wxColor(0, 0, 0),		// Black (135°)
+	//wxColor(76, 0, 153),  // Purple (150°)
+	//wxColor(34, 139,  34),  // Green (165°)
 
 });
 

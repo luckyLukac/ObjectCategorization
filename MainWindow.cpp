@@ -238,15 +238,16 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 		return;
 	}
 
-	auto start = std::chrono::steady_clock::now();
-
-	sweep.clearSegments();				      // Clearing potential previously calculated segments.
-	sweep.fillShape();						  // Filling the object.
-
-	auto endFill = std::chrono::steady_clock::now();
-
 	// Sweeping the object.
 	std::vector<LineSweeping> sweepVector(50);
+	std::vector<LineSweeping> sweeps(12, sweep);
+
+	auto start = std::chrono::steady_clock::now();
+	for (uint i = 0; i < sweeps.size(); i++) {
+		sweeps[i].clearSegments();				      // Clearing potential previously calculated segments.
+		sweeps[i].fillShape();						  // Filling the object.
+	}
+	auto endFill = std::chrono::steady_clock::now();
 	
 	const uint startAngle = 0;
 	const uint finalAngle = 180;
@@ -254,17 +255,22 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 
 	#pragma omp parallel for
 	for (int i = startAngle; i < finalAngle; i += step) {
-		LineSweeping currentSweep = sweep;
-		currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
-		currentSweep.sweep();						      // Sweeping the object with the sweep line.
-		sweepVector[static_cast<int>(i / step)] = currentSweep;
+		const uint index = static_cast<uint>(i / step);
+		//LineSweeping currentSweep = sweep;
+		sweeps[index].setAngleOfRotation(toRadians(i));
+		sweeps[index].sweep();
+		//currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
+		//currentSweep.sweep();						      // Sweeping the object with the sweep line.
+		//sweepVector[index] = currentSweep;
+		sweepVector[index] = sweeps[index];
 	}
 
-	auto end = std::chrono::steady_clock::now();
 
 	const std::string filename = tbxMultisweepOutput->GetValue().ToStdString();
 	FeatureVector featureVector = calculateFeatureVector(sweepVector);  // Calculation of a feature vector for the current object.
 	featureVector.writeToFile(filename + ".txt", "./Results/");
+
+	auto end = std::chrono::steady_clock::now();
 
 	for (uint i = 0; i < sweepVector.size(); i++) {
 		for (uint j = 0; j < sweepVector[i].chains.size(); j++) {
@@ -355,7 +361,7 @@ void MainWindow::compareResults(wxCommandEvent& event) {
 
 	const uint chainCount = (chain1.size() == 12 || chain2.size() == 12) ? std::min(chain1.size(), chain2.size()) : static_cast<uint>(std::round(0.7 * chain1.size()));
 	for (uint i = 0; i < chainCount; i++) {
-		if (difference(chain1[i], chain2[i]) > 0.10) {
+		if (difference(chain1[i], chain2[i]) > 0.05) {
 			wxMessageBox("NO", "", wxOK);
 			return;
 		}
