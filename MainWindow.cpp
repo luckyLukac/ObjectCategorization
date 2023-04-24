@@ -256,12 +256,8 @@ void MainWindow::multiSweep(wxCommandEvent& event) {
 	#pragma omp parallel for
 	for (int i = startAngle; i < finalAngle; i += step) {
 		const uint index = static_cast<uint>(i / step);
-		//LineSweeping currentSweep = sweep;
 		sweeps[index].setAngleOfRotation(toRadians(i));
 		sweeps[index].sweep();
-		//currentSweep.setAngleOfRotation(toRadians(i));   // Setting the angle of rotation for the sweep line.
-		//currentSweep.sweep();						      // Sweeping the object with the sweep line.
-		//sweepVector[index] = currentSweep;
 		sweepVector[index] = sweeps[index];
 	}
 
@@ -361,7 +357,7 @@ void MainWindow::compareResults(wxCommandEvent& event) {
 
 	const uint chainCount = (chain1.size() == 12 || chain2.size() == 12) ? std::min(chain1.size(), chain2.size()) : static_cast<uint>(std::round(0.7 * chain1.size()));
 	for (uint i = 0; i < chainCount; i++) {
-		if (difference(chain1[i], chain2[i]) > 0.05) {
+		if (difference(chain1[i], chain2[i]) > 0.1) {
 			wxMessageBox("NO", "", wxOK);
 			return;
 		}
